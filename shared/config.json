@@ -4,8 +4,8 @@
   "divisions": [
     {
       "id": "HOM",
-      "name": "Violent Crimes Unit — Homicide",
-      "short": "Homicide",
+      "name": "Major Crimes Unit",
+      "short": "Major Crimes",
       "prefix": "HOM",
       "sections": [
         "scene",
@@ -72,7 +72,7 @@
     "bureau_lead": "Bureau Lead",
     "co_lead": "Bureau Co-Lead",
     "supervisor": "Bureau Supervisor",
-    "lead": "Lead Detective",
+    "lead": "Detective III",
     "det2": "Detective II",
     "det1": "Detective I"
   },

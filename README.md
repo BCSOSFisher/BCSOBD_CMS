@@ -4,7 +4,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
 
 ## Features
 
-- **Discord sign-in.** Access and rank come from your Discord server roles: Bureau Lead, Bureau Co-Lead, Bureau Supervisor, Lead Detective, Detective II or Detective I. Bureau Lead, Co-Lead and Supervisor all have command permissions (sign-off, reopen, delete, edit any case). Anyone without a Bureau role is refused.
+- **Discord sign-in.** Access and rank come from your Discord server roles: Bureau Lead, Bureau Co-Lead, Bureau Supervisor, Detective III, Detective II or Detective I. Bureau Lead, Co-Lead and Supervisor all have command permissions (sign-off, reopen, delete, edit any case). Anyone without a Bureau role is refused.
 - **Case files** are numbered `Case #53 | HOM-2026-0053`, with the prefix set by division (HOM, VCU, GNU, VICE, SOD).
 - **Permissions.** Every detective can view every case. Only the case creator, the people they add, and supervisors can edit.
 - **Statuses:** Open, Pending Warrant, Suspended, Referred to DA, Cleared Arrest Warrant, Apprehended - Awaiting Questioning, Apprehended - Pending Case Closure, Closed.
@@ -59,7 +59,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
      - Bureau Lead → `ROLE_BUREAU_LEAD`
      - Bureau Co-Lead → `ROLE_CO_LEAD`
      - Bureau Supervisor → `ROLE_SUPERVISOR`
-     - Lead Detective → `ROLE_LEAD`
+     - Detective III → `ROLE_LEAD`
      - Detective II → `ROLE_DET2`
      - Detective I → `ROLE_DET1`
    - If several roles should map to one rank, separate their IDs with commas.
