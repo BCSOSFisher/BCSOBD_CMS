@@ -122,6 +122,10 @@ Then commit and redeploy. This needs Python 3. Charges already added to cases ke
 
 Edit `shared/config.json`. You can change division names and prefixes, outside agencies, statuses, evidence types, warrant types, and the default sections for each division. Redeploy after editing.
 
+## Media storage limit
+
+All uploaded media combined is capped at **500 MB** by default, so storage costs stay predictable. Each file can be up to 100 MB. A usage bar appears in every case's Media section, and uploads are refused once the cap is reached. To change the limits, set `MEDIA_LIMIT_MB` (total) and `MAX_UPLOAD_MB` (per file) in Railway's Variables.
+
 ## Backups
 
 All data lives in `DATA_DIR`: `bcdb.sqlite` plus an `uploads/` folder. Back up that folder; on Railway, volume backups are under the volume's settings.

@@ -360,10 +360,30 @@ const upload = multer({
   }),
   limits: { fileSize: Number(process.env.MAX_UPLOAD_MB || 100) * 1024 * 1024 },
 });
+// ---- total media storage cap (MEDIA_LIMIT_MB, default 500) ----
+const MB = 1024 * 1024;
+const mediaLimit = () => Number(process.env.MEDIA_LIMIT_MB || 500) * MB;
+const mediaUsed = () => db.prepare('SELECT COALESCE(SUM(size),0) n FROM files').get().n;
+const fullMsg = () => `Media storage is full (${Math.round(mediaUsed() / MB)} MB of ${Math.round(mediaLimit() / MB)} MB used). Delete old files or ask command to raise the limit.`;
+function checkQuota(req, res, next) {
+  const incoming = Number(req.headers['content-length'] || 0);
+  if (mediaUsed() + incoming > mediaLimit()) return res.status(413).json({ error: fullMsg() });
+  next();
+}
+// After saving: if the batch pushed storage over the cap, remove it again.
+function enforceQuota(files, res) {
+  if (mediaUsed() + files.reduce((a, f) => a + f.size, 0) <= mediaLimit()) return true;
+  for (const f of files) fs.rmSync(f.path, { force: true });
+  res.status(413).json({ error: fullMsg() });
+  return false;
+}
+app.get('/api/storage', requireUser, (req, res) => res.json({ used: mediaUsed(), limit: mediaLimit(), perFile: Number(process.env.MAX_UPLOAD_MB || 100) * MB }));
+
 app.post('/api/cases/:id/files', requireUser, (req, res, next) => {
   const c = loadCaseForEdit(req, res); if (!c) return;
   req.caseObj = c; next();
-}, upload.array('files', 20), (req, res) => {
+}, checkQuota, upload.array('files', 20), (req, res) => {
+  if (!enforceQuota(req.files || [], res)) return;
   const out = [];
   for (const f of req.files || []) {
     const r = db.prepare('INSERT INTO files (case_id,stored_name,original_name,mime,size,caption,evidence_ref,taken_at,uploaded_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
@@ -374,8 +394,9 @@ app.post('/api/cases/:id/files', requireUser, (req, res, next) => {
   touch(req.caseObj.id);
   res.json({ ids: out });
 });
-app.post('/api/persons/:pid/photo', requireUser, upload.single('file'), (req, res) => {
+app.post('/api/persons/:pid/photo', requireUser, checkQuota, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
+  if (!enforceQuota([req.file], res)) return;
   const r = db.prepare('INSERT INTO files (person_id,stored_name,original_name,mime,size,caption,uploaded_by,created_at) VALUES (?,?,?,?,?,?,?,?)')
     .run(Number(req.params.pid), req.file.filename, req.file.originalname, req.file.mimetype, req.file.size, 'Photo', req.user.id, now());
   db.prepare('UPDATE persons SET photo_id=?, updated_at=? WHERE id=?').run(Number(r.lastInsertRowid), now(), Number(req.params.pid));

@@ -1,11 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { Icon, Empty, Confirm, Modal, Field, useToast, fmtDate } from '../ui';
 import { SectionPanel } from './common';
 
 const isImg = (f) => /^image\//.test(f.mime || '');
 const isVid = (f) => /^video\//.test(f.mime || '');
-const size = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`);
+const size = (n) => (n >= 1048576 ? `${+(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`);
 
 export default function Media({ b, reload }) {
   const toast = useToast();
@@ -18,8 +18,16 @@ export default function Media({ b, reload }) {
   const [del, setDel] = useState(null);
   const [filter, setFilter] = useState('');
   const evidence = b.items.filter((i) => i.kind === 'evidence');
+  const [store, setStore] = useState(null);
+  useEffect(() => { api.get('/api/storage').then(setStore).catch(() => {}); }, [b.files.length]);
   const upload = async (files) => {
     if (!files?.length) return;
+    if (store) {
+      const big = [...files].find((f) => f.size > store.perFile);
+      if (big) return toast(`${big.name} is larger than the ${size(store.perFile)} per-file limit.`, true);
+      const total = [...files].reduce((a, f) => a + f.size, 0);
+      if (store.used + total > store.limit) return toast(`Not enough media storage: ${size(store.limit - store.used)} left of ${size(store.limit)}. Delete old files or ask command to raise the limit.`, true);
+    }
     setBusy(true);
     const fd = new FormData();
     [...files].forEach((f) => fd.append('files', f));
@@ -39,7 +47,7 @@ export default function Media({ b, reload }) {
             onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}>
             <Icon n="image" width="26" height="26" /><div style={{ marginTop: 6 }}><b>{busy ? 'Uploading…' : 'Drop files here or click to upload'}</b></div>
-            <div className="small faint">Images, video, audio, PDFs and documents · up to 100 MB each</div>
+            <div className="small faint">Images, video, audio, PDFs and documents · up to {store ? size(store.perFile) : '100 MB'} each</div>
           </div>
           <input ref={inp} type="file" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
           <div className="row small" style={{ marginTop: 8 }}>
@@ -48,6 +56,15 @@ export default function Media({ b, reload }) {
               <option value="">— none —</option>{evidence.map((e) => <option key={e.id} value={e.data.ed}>{e.data.ed} — {(e.data.title || '').slice(0, 40)}</option>)}
             </select>
           </div>
+        </div>
+      )}
+      {store && (
+        <div style={{ marginBottom: 14 }}>
+          <div className="row small" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+            <span className="muted">Bureau media storage (all cases)</span>
+            <b style={{ color: store.used / store.limit > 0.9 ? 'var(--red)' : undefined }}>{size(store.used)} of {size(store.limit)} used</b>
+          </div>
+          <div className="bar"><i style={{ width: `${Math.min(100, (store.used / store.limit) * 100)}%`, background: store.used / store.limit > 0.9 ? 'var(--red)' : store.used / store.limit > 0.75 ? 'var(--amber)' : undefined }} /></div>
         </div>
       )}
       {!shown.length ? <Empty icon="image" title="No media uploaded" /> : (
