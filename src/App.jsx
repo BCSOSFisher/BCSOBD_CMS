@@ -33,10 +33,23 @@ function Authed() {
   if (!state) return <div className="content muted">Loading…</div>;
   return (
     <AppCtx.Provider value={{ ...state, reloadUsers, setReviewCount: (n) => setState((s) => ({ ...s, reviewCount: n })) }}>
+      <Shell />
+    </AppCtx.Provider>
+  );
+}
+
+function Shell() {
+  // Mobile: the sidebar becomes a slide-out drawer opened from the ☰ button
+  const [navOpen, setNavOpen] = useState(false);
+  const loc = useLocation();
+  useEffect(() => { setNavOpen(false); }, [loc.pathname, loc.search]);
+  useEffect(() => { document.body.style.overflow = navOpen ? 'hidden' : ''; }, [navOpen]);
+  return (
       <div className="shell">
-        <Sidebar />
+        <Sidebar open={navOpen} />
+        {navOpen && <div className="nav-scrim" onClick={() => setNavOpen(false)} />}
         <div className="main">
-          <Topbar />
+          <Topbar onMenu={() => setNavOpen(true)} />
           <div className="content">
             <Routes>
               <Route path="/" element={<Dashboard />} />
@@ -51,15 +64,14 @@ function Authed() {
           </div>
         </div>
       </div>
-    </AppCtx.Provider>
   );
 }
 
-function Sidebar() {
+function Sidebar({ open }) {
   const { me, config, reviewCount } = useApp();
   const logout = async () => { await api.post('/auth/logout'); location.href = '/login'; };
   return (
-    <aside className="side">
+    <aside className={'side' + (open ? ' open' : '')}>
       <div className="brand">
         <img src="/img/badge.png" alt="" />
         <div><b>DETECTIVE BUREAU</b><span>Case Management</span></div>
@@ -95,13 +107,15 @@ function NavItem({ to, icon, children }) {
   return <NavLink to={to} className={() => (active ? 'active' : '')}><Icon n={icon} />{children}</NavLink>;
 }
 
-function Topbar() {
+function Topbar({ onMenu }) {
   const nav = useNavigate();
   const [q, setQ] = useState('');
   const [t, setT] = useState(new Date());
   useEffect(() => { const i = setInterval(() => setT(new Date()), 30000); return () => clearInterval(i); }, []);
   return (
     <div className="topbar">
+      <button className="menu-btn" onClick={onMenu} aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg></button>
+      <img className="top-badge" src="/img/badge.png" alt="" />
       <div className="crumbs"><b>Blaine County Detective Bureau</b> · Records Management</div>
       <form className="search" onSubmit={(e) => { e.preventDefault(); nav(`/cases?q=${encodeURIComponent(q)}`); }}>
         <Icon n="search" />

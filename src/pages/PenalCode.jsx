@@ -30,13 +30,13 @@ export default function PenalCode() {
           </div>
           <div style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }} className="charge-pick">
             {list.map((c) => (
-              <div key={c.code + c.name} className={'opt' + (sel === c ? ' sel' : '')} onClick={() => setSel(c)}>
+              <div key={c.code + c.name} className={'opt' + (sel === c ? ' sel' : '')} onClick={() => { setSel(c); if (window.innerWidth <= 900) setTimeout(() => document.getElementById('pc-detail')?.scrollIntoView({ behavior: 'smooth' }), 50); }}>
                 <div className="row" style={{ gap: 8 }}><span className="mono small" style={{ minWidth: 62 }}>{c.code}</span><b style={{ flex: 1 }}>{c.name}</b><span className={`pill ${CLASS_COLOR(c.classification)}`}>{c.classification}</span></div>
               </div>
             ))}
           </div>
         </div>
-        <div className="panel" style={{ position: 'sticky', top: 74 }}>
+        <div className="panel" id="pc-detail" style={{ position: 'sticky', top: 74 }}>
           {sel ? (
             <div className="panel-b">
               <div className="mono small muted">{sel.code} · {sel.category}</div>
