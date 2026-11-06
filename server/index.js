@@ -35,7 +35,7 @@ auth.mount(app);
 
 // ---------- helpers ----------
 const now = () => new Date().toISOString();
-const RANK_ORDER = { supervisor: 4, lead: 3, det2: 2, det1: 1 };
+const RANK_ORDER = { bureau_lead: 6, co_lead: 5, supervisor: 4, lead: 3, det2: 2, det1: 1 };
 function requireUser(req, res, next) {
   const uid = req.session && req.session.uid;
   if (!uid) return res.status(401).json({ error: 'Not signed in' });
@@ -44,7 +44,8 @@ function requireUser(req, res, next) {
   req.user = u;
   next();
 }
-const isSup = (u) => u.rank === 'supervisor';
+// Bureau Lead, Co-Lead and Supervisors share command permissions (sign-off, reopen, delete, edit any case)
+const isSup = (u) => (config.commandRanks || ['supervisor']).includes(u.rank);
 function audit(caseId, userId, action, detail = '') {
   db.prepare('INSERT INTO audit (case_id,user_id,action,detail,at) VALUES (?,?,?,?,?)').run(caseId, userId, action, String(detail).slice(0, 500), now());
 }
@@ -445,7 +446,7 @@ app.post('/api/cases/:id/closure/approve', requireUser, (req, res) => {
   if (!isSup(req.user)) return res.status(403).json({ error: 'Only a Bureau Supervisor can sign off.' });
   const c = getCase(req.params.id); if (!c) return res.status(404).end();
   if (!c.closure?.requested) return res.status(400).json({ error: 'This case has not been submitted for closure.' });
-  const closure = { ...c.closure, requested: 0, approved: 1, supervisor_sig: { user_id: req.user.id, name: req.user.display_name, signed_at: now(), comment: req.body.comment || '' } };
+  const closure = { ...c.closure, requested: 0, approved: 1, supervisor_sig: { user_id: req.user.id, name: req.user.display_name, rank: req.user.rank, signed_at: now(), comment: req.body.comment || '' } };
   db.prepare("UPDATE cases SET closure=?, status='Closed', updated_at=? WHERE id=?").run(JSON.stringify(closure), now(), c.id);
   audit(c.id, req.user.id, 'Supervisor sign-off', 'Case closed');
   res.json({ ok: true });

@@ -74,7 +74,7 @@ function Sidebar() {
         <NavItem to="/penal-code" icon="book">Penal Code</NavItem>
         <div className="grp">Bureau</div>
         <NavItem to="/roster" icon="shield">Personnel Roster</NavItem>
-        {me.rank === 'supervisor' && (
+        {config.commandRanks.includes(me.rank) && (
           <NavItem to="/?review=1" icon="pen">Supervisor Review{reviewCount > 0 && <span className="count">{reviewCount}</span>}</NavItem>
         )}
       </nav>

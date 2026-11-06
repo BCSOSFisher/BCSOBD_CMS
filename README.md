@@ -4,7 +4,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
 
 ## Features
 
-- **Discord sign-in.** Access and rank come from your Discord server roles: Bureau Supervisor, Lead Detective, Detective II or Detective I. Anyone without a Bureau role is refused.
+- **Discord sign-in.** Access and rank come from your Discord server roles: Bureau Lead, Bureau Co-Lead, Bureau Supervisor, Lead Detective, Detective II or Detective I. Bureau Lead, Co-Lead and Supervisor all have command permissions (sign-off, reopen, delete, edit any case). Anyone without a Bureau role is refused.
 - **Case files** are numbered `Case #53 | HOM-2026-0053`, with the prefix set by division (HOM, VCU, GNU, VICE, SOD).
 - **Permissions.** Every detective can view every case. Only the case creator, the people they add, and supervisors can edit.
 - **Statuses:** Open, Pending Warrant, Suspended, Referred to DA, Cleared Arrest Warrant, Apprehended - Awaiting Questioning, Apprehended - Pending Case Closure, Closed.
@@ -41,7 +41,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
   - Actions taken, the media index and a photo appendix
   - The sworn declaration and signature blocks
 - **Download Warrant Packet.** Produces a DOJ-ready document with the probable cause statement, alleged offenses and their elements, supporting evidence, the subject profile, photo exhibits and the affiant declaration.
-- **Supervisor sign-off.** The detective signs the declaration and submits the case, which locks it. A supervisor then signs to close it, or returns it with a reason.
+- **Supervisor sign-off.** The detective signs the declaration and submits the case, which locks it. A Bureau Lead, Co-Lead or Supervisor then signs to close it, or returns it with a reason.
 - **Audit trail** of every change, recorded per case.
 
 ---
@@ -56,6 +56,8 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
 4. In the Discord client, turn on **User Settings → Advanced → Developer Mode**. Then:
    - Right-click your department server icon → **Copy Server ID**. This is `DISCORD_GUILD_ID`.
    - Go to **Server Settings → Roles**, right-click each role → **Copy Role ID**. Copy the IDs for:
+     - Bureau Lead → `ROLE_BUREAU_LEAD`
+     - Bureau Co-Lead → `ROLE_CO_LEAD`
      - Bureau Supervisor → `ROLE_SUPERVISOR`
      - Lead Detective → `ROLE_LEAD`
      - Detective II → `ROLE_DET2`
@@ -77,7 +79,7 @@ Any Node.js host with a persistent disk works. These steps are for [Railway](htt
    | `DISCORD_CLIENT_SECRET` | from step 1 |
    | `DISCORD_REDIRECT_URI` | `https://<your-domain>/auth/discord/callback` |
    | `DISCORD_GUILD_ID` | server ID |
-   | `ROLE_SUPERVISOR`, `ROLE_LEAD`, `ROLE_DET2`, `ROLE_DET1` | role IDs |
+   | `ROLE_BUREAU_LEAD`, `ROLE_CO_LEAD`, `ROLE_SUPERVISOR`, `ROLE_LEAD`, `ROLE_DET2`, `ROLE_DET1` | role IDs |
    | `SESSION_SECRET` | any long random string (40+ characters) |
    | `DATA_DIR` | `/data` |
    | `CASE_NUMBER_START` | the next case number you want, e.g. `54` |

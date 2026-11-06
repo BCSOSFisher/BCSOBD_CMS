@@ -278,7 +278,7 @@ function signatureBlock(bundle, config) {
     kv([['Detective Name:', ds?.name || ''], ['Rank:', rankName(config, ds?.rank)], ['Detective Signature:', ds ? `/s/ ${ds.name}  (electronically signed)` : 'UNSIGNED'], ['Date:', ds ? fmtDT(ds.signed_at) : '']]),
     blank(160),
     para('Bureau Supervisor Review', { bold: true, size: 20, color: NAVY, after: 80 }),
-    kv([['Supervisor Name:', ss?.name || ''], ['Supervisor Signature:', ss ? `/s/ ${ss.name}  (electronically signed)` : 'PENDING SUPERVISOR REVIEW'], ['Date:', ss ? fmtDT(ss.signed_at) : ''], ss?.comment ? ['Supervisor Comments:', ss.comment] : null]),
+    kv([['Supervisor Name:', ss?.name || ''], ss ? ['Rank:', rankName(config, ss.rank || 'supervisor')] : null, ['Supervisor Signature:', ss ? `/s/ ${ss.name}  (electronically signed)` : 'PENDING SUPERVISOR REVIEW'], ['Date:', ss ? fmtDT(ss.signed_at) : ''], ss?.comment ? ['Supervisor Comments:', ss.comment] : null]),
   ];
 }
 

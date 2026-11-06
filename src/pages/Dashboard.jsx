@@ -36,7 +36,7 @@ export default function Dashboard() {
         <div className="panel stat"><div className="k">Closed (30 days)</div><div className="v">{d.closed30}</div><div className="d">{d.review.length} awaiting supervisor sign-off</div></div>
       </div>
 
-      {(me.rank === 'supervisor' || d.review.length > 0) && (
+      {(config.commandRanks.includes(me.rank) || d.review.length > 0) && (
         <div className="panel" ref={reviewRef} style={{ marginBottom: 16, borderColor: d.review.length ? '#e7cf85' : undefined }}>
           <div className="panel-h"><h3><Icon n="pen" width="15" style={{ verticalAlign: -2, marginRight: 6 }} />Supervisor Review Queue<span className="sub">Cases submitted for closure</span></h3></div>
           {d.review.length ? (

@@ -7,7 +7,8 @@ export default function Roster() {
   const { users, config, me, reloadUsers } = useApp();
   const toast = useToast();
   const [cs, setCs] = useState({});
-  const order = ['supervisor', 'lead', 'det2', 'det1'];
+  const order = config.rankOrder;
+  const cmd = config.commandRanks.includes(me.rank);
   return (
     <>
       <div className="page-head"><div><h1>Personnel Roster</h1><p>Ranks are synced from Discord roles at each sign-in. To change someone’s rank, change their role in Discord.</p></div></div>
@@ -18,9 +19,9 @@ export default function Roster() {
             {[...users].sort((a, b) => order.indexOf(a.rank) - order.indexOf(b.rank) || a.display_name.localeCompare(b.display_name)).map((u) => (
               <tr key={u.id}>
                 <td><Avatar u={u} sm /></td><td><b>{u.display_name}</b></td>
-                <td><span className={`pill ${u.rank === 'supervisor' ? 'navy' : u.rank === 'lead' ? 'blue' : 'gray'}`}>{config.ranks[u.rank]}</span></td>
+                <td><span className={`pill ${config.commandRanks.includes(u.rank) ? 'navy' : u.rank === 'lead' ? 'blue' : 'gray'}`}>{config.ranks[u.rank]}</span></td>
                 <td>
-                  {me.rank === 'supervisor' || me.id === u.id ? (
+                  {cmd || me.id === u.id ? (
                     <input style={{ width: 120, padding: '4px 8px' }} defaultValue={u.callsign || ''} onChange={(e) => setCs({ ...cs, [u.id]: e.target.value })}
                       onBlur={async () => { if (cs[u.id] === undefined) return; await api.patch(`/api/users/${u.id}`, { callsign: cs[u.id] }); reloadUsers(); toast('Callsign saved'); }} />
                   ) : (u.callsign || '—')}

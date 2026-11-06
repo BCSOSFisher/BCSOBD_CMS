@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   discord_id TEXT UNIQUE NOT NULL,
   username TEXT, display_name TEXT, avatar TEXT,
-  rank TEXT NOT NULL,             -- supervisor | lead | det2 | det1
+  rank TEXT NOT NULL,             -- bureau_lead | co_lead | supervisor | lead | det2 | det1
   callsign TEXT,
   last_login TEXT, created_at TEXT DEFAULT (datetime('now'))
 );

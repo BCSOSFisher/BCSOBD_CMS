@@ -72,12 +72,12 @@ export default function Closure({ b, reload }) {
         ) : null}
       </SectionPanel>
 
-      <SectionPanel title="Bureau Supervisor Sign-off" sub="Required to close the case">
+      <SectionPanel title="Command Sign-off" sub="Bureau Lead, Co-Lead or Supervisor — required to close the case">
         {cl.supervisor_sig ? (
           <div className="sig">
             <div className="tag">Supervisor Signature</div>
             <div className="line">{cl.supervisor_sig.name}</div>
-            <div className="small muted" style={{ marginTop: 6 }}>Bureau Supervisor {cl.supervisor_sig.name} · {fmtDT(cl.supervisor_sig.signed_at)}</div>
+            <div className="small muted" style={{ marginTop: 6 }}>{config.ranks[cl.supervisor_sig.rank || 'supervisor']} {cl.supervisor_sig.name} · {fmtDT(cl.supervisor_sig.signed_at)}</div>
             {cl.supervisor_sig.comment && <div className="small" style={{ marginTop: 6 }}><b>Comments:</b> {cl.supervisor_sig.comment}</div>}
           </div>
         ) : cl.requested && b.isSupervisor ? (
