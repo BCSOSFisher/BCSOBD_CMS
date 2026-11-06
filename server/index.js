@@ -545,8 +545,11 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
 const dist = path.join(__dirname, '..', 'dist');
 app.use('/img', express.static(path.join(__dirname, '..', 'public', 'img')));
 if (fs.existsSync(dist)) {
-  app.use(express.static(dist, { index: false }));
-  app.get(/^\/(?!api|auth).*/, (req, res) => res.sendFile(path.join(dist, 'index.html')));
+  // Hashed build files can be cached forever; the page itself must always be re-checked
+  // so phones pick up new deployments immediately.
+  app.use('/assets', express.static(path.join(dist, 'assets'), { immutable: true, maxAge: '1y' }));
+  app.use(express.static(dist, { index: false, setHeaders: (res) => res.set('Cache-Control', 'no-cache') }));
+  app.get(/^\/(?!api|auth).*/, (req, res) => { res.set('Cache-Control', 'no-cache, no-store, must-revalidate'); res.sendFile(path.join(dist, 'index.html')); });
 }
 app.use((err, req, res, next) => {
   console.error(err);

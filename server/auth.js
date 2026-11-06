@@ -10,6 +10,8 @@ const {
 } = process.env;
 const DEV = process.env.DEV_LOGIN === 'true';
 const API = 'https://discord.com/api/v10';
+// Shown on /auth/status so you can confirm which update is live
+const BUILD = 'mobile-layout-2';
 
 const ids = (s) => String(s).split(',').map((x) => x.trim()).filter(Boolean);
 // Unit membership roles: UNIT_ROLE_<DIVISION ID>=roleId (e.g. UNIT_ROLE_HOM, UNIT_ROLE_GNU, UNIT_ROLE_VICE)
@@ -48,6 +50,8 @@ function mount(app) {
   app.get('/auth/status', (req, res) => res.json({
     discordConfigured: !!(DISCORD_CLIENT_ID && DISCORD_CLIENT_SECRET && DISCORD_REDIRECT_URI && DISCORD_GUILD_ID),
     devLogin: DEV,
+    version: (process.env.RAILWAY_GIT_COMMIT_SHA || 'local').slice(0, 7),
+    build: BUILD,
   }));
 
   app.get('/auth/discord', (req, res) => {
