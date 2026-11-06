@@ -1,0 +1,61 @@
+{
+  "orgName": "Blaine County Detective Bureau",
+  "orgShort": "BCDB",
+  "divisions": [
+    { "id": "HOM",  "name": "Violent Crimes Unit — Homicide", "short": "Homicide", "prefix": "HOM",
+      "sections": ["scene", "coroner"] },
+    { "id": "VCU",  "name": "Violent Crimes Unit", "short": "Violent Crimes", "prefix": "VCU",
+      "sections": ["scene"] },
+    { "id": "GNU",  "name": "Gang & Narcotics Unit", "short": "Gang & Narcotics", "prefix": "GNU",
+      "sections": ["vehicles", "surveillance", "bolos"] },
+    { "id": "VICE", "name": "VICE", "short": "VICE", "prefix": "VICE",
+      "sections": ["surveillance", "informants"] },
+    { "id": "SOD",  "name": "Special Operations", "short": "Special Ops", "prefix": "SOD",
+      "sections": ["operations", "vehicles"] }
+  ],
+  "statuses": [
+    "Open",
+    "Pending Warrant",
+    "Suspended",
+    "Referred to DA",
+    "Cleared Arrest Warrant",
+    "Apprehended - Awaiting Questioning",
+    "Apprehended - Pending Case Closure",
+    "Closed"
+  ],
+  "agencies": ["LSPD", "SAHP", "US Marshals"],
+  "ranks": {
+    "supervisor": "Bureau Supervisor",
+    "lead": "Lead Detective",
+    "det2": "Detective II",
+    "det1": "Detective I"
+  },
+  "personRoles": ["Suspect", "Victim", "Witness", "Person of Interest", "Complainant", "Informant"],
+  "evidenceTypes": ["Physical", "Biological / DNA", "Fingerprint", "Ballistic", "Digital", "Documentary", "Photographic", "Video", "Audio", "Testimonial", "Observation", "Other"],
+  "warrantTypes": ["Arrest Warrant", "Search Warrant", "DNA / Biological Sample Warrant", "Phone / Digital Records Warrant", "Vehicle Search Warrant", "Financial Records Warrant", "Bench Warrant Request"],
+  "warrantStatuses": ["Draft", "Submitted to DOJ", "Approved", "Denied", "Executed", "Returned / Expired"],
+  "coreSections": [
+    { "key": "overview",  "label": "Overview & Incident" },
+    { "key": "persons",   "label": "Persons Involved" },
+    { "key": "charges",   "label": "Charges & Elements" },
+    { "key": "evidence",  "label": "Evidence Log" },
+    { "key": "interviews","label": "Interviews & Statements" },
+    { "key": "notes",     "label": "Detective Notes" },
+    { "key": "timeline",  "label": "Timeline" },
+    { "key": "warrants",  "label": "Warrants" },
+    { "key": "media",     "label": "Media & Attachments" },
+    { "key": "links",     "label": "Linked Cases" },
+    { "key": "closure",   "label": "Review & Closure" }
+  ],
+  "optionalSections": [
+    { "key": "scene",        "label": "Scene Observations",    "desc": "Entry points, weapons, blood evidence, scene conditions." },
+    { "key": "coroner",      "label": "Coroner Summary",       "desc": "Medical examiner findings, cause & manner of death." },
+    { "key": "vehicles",     "label": "Vehicles",              "desc": "Vehicles of interest, plates, registered owners." },
+    { "key": "bolos",        "label": "BOLOs",                 "desc": "Be-on-the-lookout notices issued for this case." },
+    { "key": "surveillance", "label": "Surveillance Log",      "desc": "Stakeouts, observations of subjects and locations." },
+    { "key": "informants",   "label": "Confidential Informants","desc": "CI references, reliability and information provided." },
+    { "key": "operations",   "label": "Operations Plan",       "desc": "Tactical/operational planning, raids and debriefs." },
+    { "key": "financial",    "label": "Financial / Assets",    "desc": "Bank records, seized assets, money trail." },
+    { "key": "custom",       "label": "Custom Section",        "desc": "A free-form section with your own title." }
+  ]
+}
