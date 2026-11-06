@@ -48,13 +48,35 @@ export default function Media({ b, reload }) {
       const total = [...files].reduce((a, f) => a + f.size, 0);
       if (store.limit && store.used + total > store.limit) return toast(`Not enough media storage: ${size(store.limit - store.used)} left of ${size(store.limit)}.`, true);
     }
+    const vids = [...files].filter((f) => /^video\//.test(f.type));
+    const others = [...files].filter((f) => !/^video\//.test(f.type));
+    // Videos need a title describing what they show before they can be uploaded
+    if (vids.length) return setPending({ others, vids, titles: vids.map(() => ''), ref });
+    send(others, [], ref);
+  };
+  const send = async (others, vids, evRef) => {
     setBusy(true);
-    const fd = new FormData();
-    [...files].forEach((f) => fd.append('files', f));
-    fd.append('evidence_ref', ref);
-    try { await api.upload(`/api/cases/${b.case.id}/files`, fd); await reload(); toast(`${files.length} file(s) uploaded`); } catch (e) { toast(e.message, true); }
+    try {
+      if (others.length) {
+        const fd = new FormData();
+        others.forEach((f) => fd.append('files', f));
+        fd.append('evidence_ref', evRef);
+        await api.upload(`/api/cases/${b.case.id}/files`, fd);
+      }
+      for (const v of vids) {
+        const fd = new FormData();
+        fd.append('files', v.file);
+        fd.append('caption', v.title.trim());
+        fd.append('evidence_ref', evRef);
+        await api.upload(`/api/cases/${b.case.id}/files`, fd);
+      }
+      toast(`${others.length + vids.length} file(s) uploaded`);
+    } catch (e) { toast(e.message, true); }
+    await reload();
     setBusy(false);
   };
+  const [pending, setPending] = useState(null);
+  const titlesOk = pending && pending.titles.every((t) => t.trim().length >= 3);
   const shown = filter === 'link' ? [] : b.files.filter((f) => !filter || (filter === 'img' ? isImg(f) : filter === 'vid' ? isVid(f) : !isImg(f) && !isVid(f)));
   const shownLinks = !filter || filter === 'link' || filter === 'vid' ? links : [];
   return (
@@ -144,10 +166,27 @@ export default function Media({ b, reload }) {
         </div>
       )}
       <p className="small faint" style={{ marginBottom: 0, marginTop: 14 }}>Photos (PNG/JPG/GIF) are embedded in the downloaded case report’s Photographic Evidence Appendix. Videos, documents and media links are listed in the report with clickable links.</p>
+      {pending && (
+        <Modal title={`Title ${pending.vids.length > 1 ? 'these videos' : 'this video'}`} onClose={() => setPending(null)} footer={<>
+          <button className="btn" onClick={() => setPending(null)}>Cancel</button>
+          <button className="btn primary" disabled={!titlesOk} onClick={() => { const p = pending; setPending(null); send(p.others, p.vids.map((file, i) => ({ file, title: p.titles[i] })), p.ref); }}>
+            Upload {pending.others.length + pending.vids.length} file(s)</button></>}>
+          <p className="muted small" style={{ marginTop: 0 }}>Every video needs a title describing what it shows. The title appears on the case file and in the report.</p>
+          <div className="form">
+            {pending.vids.map((v, i) => (
+              <Field key={i} label={`${v.name} · ${size(v.size)}`}>
+                <input autoFocus={i === 0} value={pending.titles[i]} placeholder="e.g. Bodycam — suspect fleeing the scene"
+                  onChange={(e) => setPending({ ...pending, titles: pending.titles.map((t, j) => (j === i ? e.target.value : t)) })} />
+              </Field>
+            ))}
+          </div>
+          {pending.others.length > 0 && <p className="small faint" style={{ marginBottom: 0 }}>{pending.others.length} other file(s) will upload with them.</p>}
+        </Modal>
+      )}
       {linkEdit && <ItemModal b={b} wide={false} title={linkEdit.id ? 'Edit Media Link' : 'Add Video / Media Link'} initial={linkEdit.data}
         fields={[
           { k: 'url', label: 'Link', span: 4, ph: 'https://medal.tv/… or https://youtu.be/…' },
-          { k: 'title', label: 'Title', span: 4, ph: 'e.g. Bodycam — suspect fleeing scene' },
+          { k: 'title', label: 'Title (required)', hint: 'What does the video show?', span: 4, ph: 'e.g. Bodycam — suspect fleeing scene' },
           { k: 'evidence_ref', label: 'Evidence Reference', type: 'select', options: evidence.map((e) => e.data.ed), span: 2 },
           { k: 'description', label: 'Description', type: 'textarea', rows: 3, ph: 'What the clip shows, timestamps of interest…' },
         ]}
@@ -163,9 +202,9 @@ export default function Media({ b, reload }) {
       )}
       {edit && (
         <Modal title="Edit Media Details" onClose={() => setEdit(null)} footer={<><button className="btn" onClick={() => setEdit(null)}>Cancel</button>
-          <button className="btn primary" onClick={async () => { await api.patch(`/api/files/${edit.id}`, edit); await reload(); setEdit(null); }}>Save</button></>}>
+          <button className="btn primary" disabled={isVid(edit) && (edit.caption || '').trim().length < 3} onClick={async () => { try { await api.patch(`/api/files/${edit.id}`, edit); await reload(); setEdit(null); } catch (e) { toast(e.message, true); } }}>Save</button></>}>
           <div className="form">
-            <Field label="Caption"><input value={edit.caption} onChange={(e) => setEdit({ ...edit, caption: e.target.value })} placeholder="e.g. Kitchen floor, facing north" /></Field>
+            <Field label={isVid(edit) ? 'Title (required)' : 'Caption'} hint={isVid(edit) ? 'What does the video show?' : undefined}><input value={edit.caption} onChange={(e) => setEdit({ ...edit, caption: e.target.value })} placeholder="e.g. Kitchen floor, facing north" /></Field>
             <Field label="Evidence Reference"><select value={edit.evidence_ref} onChange={(e) => setEdit({ ...edit, evidence_ref: e.target.value })}>
               <option value="">— none —</option>{evidence.map((e) => <option key={e.id} value={e.data.ed}>{e.data.ed} — {e.data.title}</option>)}</select></Field>
             <Field label="Date / Time Taken"><input value={edit.taken_at} onChange={(e) => setEdit({ ...edit, taken_at: e.target.value })} /></Field>

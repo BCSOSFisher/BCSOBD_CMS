@@ -309,6 +309,8 @@ app.delete('/api/case-persons/:lid', requireUser, (req, res) => {
 // ---------- generic case items ----------
 const KINDS = ['evidence', 'interview', 'note', 'timeline', 'warrant', 'bolo', 'vehicle', 'charge', 'custom', 'surveillance', 'informant', 'operation', 'financial', 'medialink'];
 const KIND_LABEL = { evidence: 'Evidence', interview: 'Interview', note: 'Note', timeline: 'Timeline event', warrant: 'Warrant', bolo: 'BOLO', vehicle: 'Vehicle', charge: 'Charge', custom: 'Section', surveillance: 'Surveillance entry', informant: 'Informant entry', operation: 'Operation', financial: 'Financial record', medialink: 'Media link' };
+const TITLE_MSG = 'Add a title describing what the video shows (e.g. “Bodycam — suspect fleeing the scene”).';
+const hasTitle = (t) => String(t || '').trim().length >= 3;
 const validUrl = (u) => { try { return ['http:', 'https:'].includes(new URL(String(u)).protocol); } catch { return false; } };
 function itemLabel(kind, d) {
   return [d.ed, d.code, d.title, d.name, d.type, d.plate, d.subject].filter(Boolean).slice(0, 2).join(' — ') || '';
@@ -325,6 +327,7 @@ app.post('/api/cases/:id/items', requireUser, (req, res) => {
   }
   if (kind === 'note') data.author = data.author || req.user.display_name;
   if (kind === 'medialink' && !validUrl(data.url)) return res.status(400).json({ error: 'Enter a full link starting with https://' });
+  if (kind === 'medialink' && !hasTitle(data.title)) return res.status(400).json({ error: TITLE_MSG });
   const r = db.prepare('INSERT INTO items (case_id,kind,data,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?)').run(c.id, kind, JSON.stringify(data), req.user.id, now(), now());
   audit(c.id, req.user.id, `${KIND_LABEL[kind]} added`, itemLabel(kind, data));
   touch(c.id);
@@ -342,6 +345,7 @@ app.patch('/api/items/:itemId', requireUser, (req, res) => {
   const r = loadItem(req, res); if (!r) return;
   const data = { ...r.it.data, ...(req.body.data || {}) };
   if (r.it.kind === 'medialink' && !validUrl(data.url)) return res.status(400).json({ error: 'Enter a full link starting with https://' });
+  if (r.it.kind === 'medialink' && !hasTitle(data.title)) return res.status(400).json({ error: TITLE_MSG });
   db.prepare('UPDATE items SET data=?, updated_at=? WHERE id=?').run(JSON.stringify(data), now(), r.it.id);
   if (!req.body.silent) audit(r.c.id, req.user.id, `${KIND_LABEL[r.it.kind]} updated`, itemLabel(r.it.kind, data));
   touch(r.c.id);
@@ -400,6 +404,11 @@ app.post('/api/cases/:id/files', requireUser, (req, res, next) => {
   const c = loadCaseForEdit(req, res); if (!c) return;
   req.caseObj = c; next();
 }, checkQuota, upload.array('files', 20), (req, res) => {
+  // Uploaded videos must carry a title (sent as the caption)
+  if ((req.files || []).some((f) => /^video\//.test(f.mimetype)) && !hasTitle(req.body.caption)) {
+    for (const f of req.files) fs.rmSync(f.path, { force: true });
+    return res.status(400).json({ error: TITLE_MSG });
+  }
   if (!enforceQuota(req.files || [], res, req.caseObj.id)) return;
   const out = [];
   for (const f of req.files || []) {
@@ -429,6 +438,7 @@ app.get('/api/files/:fid', requireUser, (req, res) => {
 app.patch('/api/files/:fid', requireUser, (req, res) => {
   const f = db.prepare('SELECT * FROM files WHERE id=?').get(Number(req.params.fid)); if (!f) return res.status(404).end();
   req.params.id = f.case_id; const c = loadCaseForEdit(req, res); if (!c) return;
+  if (/^video\//.test(f.mime || '') && req.body.caption !== undefined && !hasTitle(req.body.caption)) return res.status(400).json({ error: TITLE_MSG });
   db.prepare('UPDATE files SET caption=COALESCE(?,caption), evidence_ref=COALESCE(?,evidence_ref), taken_at=COALESCE(?,taken_at) WHERE id=?')
     .run(req.body.caption ?? null, req.body.evidence_ref ?? null, req.body.taken_at ?? null, f.id);
   res.json({ ok: true });
