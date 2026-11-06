@@ -25,8 +25,10 @@ export default function Media({ b, reload }) {
     if (store) {
       const big = [...files].find((f) => f.size > store.perFile);
       if (big) return toast(`${big.name} is larger than the ${size(store.perFile)} per-file limit.`, true);
+      const left = store.perCase - b.files.length;
+      if (files.length > left) return toast(left > 0 ? `Only ${left} more upload(s) allowed on this case (limit ${store.perCase}).` : `This case has reached its limit of ${store.perCase} uploads. Delete a file before adding more.`, true);
       const total = [...files].reduce((a, f) => a + f.size, 0);
-      if (store.used + total > store.limit) return toast(`Not enough media storage: ${size(store.limit - store.used)} left of ${size(store.limit)}. Delete old files or ask command to raise the limit.`, true);
+      if (store.limit && store.used + total > store.limit) return toast(`Not enough media storage: ${size(store.limit - store.used)} left of ${size(store.limit)}.`, true);
     }
     setBusy(true);
     const fd = new FormData();
@@ -47,7 +49,7 @@ export default function Media({ b, reload }) {
             onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}>
             <Icon n="image" width="26" height="26" /><div style={{ marginTop: 6 }}><b>{busy ? 'Uploading…' : 'Drop files here or click to upload'}</b></div>
-            <div className="small faint">Images, video, audio, PDFs and documents · up to {store ? size(store.perFile) : '100 MB'} each</div>
+            <div className="small faint">Images, video, audio, PDFs and documents · up to {store ? size(store.perFile) : '500 MB'} each{store ? ` · max ${store.perCase} per case` : ''}</div>
           </div>
           <input ref={inp} type="file" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
           <div className="row small" style={{ marginTop: 8 }}>
@@ -58,15 +60,18 @@ export default function Media({ b, reload }) {
           </div>
         </div>
       )}
-      {store && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="row small" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
-            <span className="muted">Bureau media storage (all cases)</span>
-            <b style={{ color: store.used / store.limit > 0.9 ? 'var(--red)' : undefined }}>{size(store.used)} of {size(store.limit)} used</b>
+      {store && (() => {
+        const pct = b.files.length / store.perCase;
+        return (
+          <div style={{ marginBottom: 14 }}>
+            <div className="row small" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+              <span className="muted">Uploads on this case</span>
+              <b style={{ color: pct >= 1 ? 'var(--red)' : undefined }}>{b.files.length} of {store.perCase} used</b>
+            </div>
+            <div className="bar"><i style={{ width: `${Math.min(100, pct * 100)}%`, background: pct >= 1 ? 'var(--red)' : pct >= 0.8 ? 'var(--amber)' : undefined }} /></div>
           </div>
-          <div className="bar"><i style={{ width: `${Math.min(100, (store.used / store.limit) * 100)}%`, background: store.used / store.limit > 0.9 ? 'var(--red)' : store.used / store.limit > 0.75 ? 'var(--amber)' : undefined }} /></div>
-        </div>
-      )}
+        );
+      })()}
       {!shown.length ? <Empty icon="image" title="No media uploaded" /> : (
         <div className="media-grid">
           {shown.map((f) => (

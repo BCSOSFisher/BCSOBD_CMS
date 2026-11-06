@@ -122,9 +122,12 @@ Then commit and redeploy. This needs Python 3. Charges already added to cases ke
 
 Edit `shared/config.json`. You can change division names and prefixes, outside agencies, statuses, evidence types, warrant types, and the default sections for each division. Redeploy after editing.
 
-## Media storage limit
+## Upload limits
 
-All uploaded media combined is capped at **500 MB** by default, so storage costs stay predictable. Each file can be up to 100 MB. A usage bar appears in every case's Media section, and uploads are refused once the cap is reached. To change the limits, set `MEDIA_LIMIT_MB` (total) and `MAX_UPLOAD_MB` (per file) in Railway's Variables.
+- **500 MB per file.** Larger files are refused before they upload.
+- **15 uploads per case.** A counter in each case's Media section shows how many are used; delete a file to make room.
+
+To change them, set `MAX_UPLOAD_MB` and `MAX_FILES_PER_CASE` in Railway's Variables. You can also add an overall cap across all cases with `MEDIA_LIMIT_MB` (unset by default). Person profile photos don't count toward the per-case limit.
 
 ## Backups
 

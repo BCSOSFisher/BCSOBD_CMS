@@ -358,32 +358,44 @@ const upload = multer({
     destination: UPLOAD_DIR,
     filename: (req, file, cb) => cb(null, crypto.randomBytes(12).toString('hex') + path.extname(file.originalname).toLowerCase().slice(0, 10)),
   }),
-  limits: { fileSize: Number(process.env.MAX_UPLOAD_MB || 100) * 1024 * 1024 },
+  limits: { fileSize: Number(process.env.MAX_UPLOAD_MB || 500) * 1024 * 1024 },
 });
-// ---- total media storage cap (MEDIA_LIMIT_MB, default 500) ----
+// ---- upload limits ----
+// MAX_UPLOAD_MB      per file (default 500)
+// MAX_FILES_PER_CASE uploads per case file (default 15)
+// MEDIA_LIMIT_MB     optional total cap across all cases (unset = no total cap)
 const MB = 1024 * 1024;
-const mediaLimit = () => Number(process.env.MEDIA_LIMIT_MB || 500) * MB;
+const perFile = () => Number(process.env.MAX_UPLOAD_MB || 500) * MB;
+const perCase = () => Number(process.env.MAX_FILES_PER_CASE || 15);
+const mediaLimit = () => (process.env.MEDIA_LIMIT_MB ? Number(process.env.MEDIA_LIMIT_MB) * MB : null);
 const mediaUsed = () => db.prepare('SELECT COALESCE(SUM(size),0) n FROM files').get().n;
+const caseCount = (id) => db.prepare('SELECT COUNT(*) n FROM files WHERE case_id=?').get(id).n;
 const fullMsg = () => `Media storage is full (${Math.round(mediaUsed() / MB)} MB of ${Math.round(mediaLimit() / MB)} MB used). Delete old files or ask command to raise the limit.`;
+const caseFullMsg = (id) => `This case already has ${caseCount(id)} of ${perCase()} allowed uploads. Delete a file before adding more.`;
 function checkQuota(req, res, next) {
-  const incoming = Number(req.headers['content-length'] || 0);
-  if (mediaUsed() + incoming > mediaLimit()) return res.status(413).json({ error: fullMsg() });
+  if (req.caseObj && caseCount(req.caseObj.id) >= perCase()) return res.status(413).json({ error: caseFullMsg(req.caseObj.id) });
+  const lim = mediaLimit();
+  if (lim && mediaUsed() + Number(req.headers['content-length'] || 0) > lim) return res.status(413).json({ error: fullMsg() });
   next();
 }
-// After saving: if the batch pushed storage over the cap, remove it again.
-function enforceQuota(files, res) {
-  if (mediaUsed() + files.reduce((a, f) => a + f.size, 0) <= mediaLimit()) return true;
+// After saving: if the batch broke a limit, remove the new files again.
+function enforceQuota(files, res, caseId) {
+  let err = null;
+  if (caseId && caseCount(caseId) + files.length > perCase()) err = `Only ${Math.max(0, perCase() - caseCount(caseId))} more upload(s) allowed on this case (limit ${perCase()}). Nothing was uploaded.`;
+  const lim = mediaLimit();
+  if (!err && lim && mediaUsed() + files.reduce((a, f) => a + f.size, 0) > lim) err = fullMsg();
+  if (!err) return true;
   for (const f of files) fs.rmSync(f.path, { force: true });
-  res.status(413).json({ error: fullMsg() });
+  res.status(413).json({ error: err });
   return false;
 }
-app.get('/api/storage', requireUser, (req, res) => res.json({ used: mediaUsed(), limit: mediaLimit(), perFile: Number(process.env.MAX_UPLOAD_MB || 100) * MB }));
+app.get('/api/storage', requireUser, (req, res) => res.json({ used: mediaUsed(), limit: mediaLimit(), perFile: perFile(), perCase: perCase() }));
 
 app.post('/api/cases/:id/files', requireUser, (req, res, next) => {
   const c = loadCaseForEdit(req, res); if (!c) return;
   req.caseObj = c; next();
 }, checkQuota, upload.array('files', 20), (req, res) => {
-  if (!enforceQuota(req.files || [], res)) return;
+  if (!enforceQuota(req.files || [], res, req.caseObj.id)) return;
   const out = [];
   for (const f of req.files || []) {
     const r = db.prepare('INSERT INTO files (case_id,stored_name,original_name,mime,size,caption,evidence_ref,taken_at,uploaded_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
@@ -523,7 +535,7 @@ if (fs.existsSync(dist)) {
 }
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.status || 500).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'File is too large.' : (err.message || 'Server error') });
+  res.status(err.status || 500).json({ error: err.code === 'LIMIT_FILE_SIZE' ? `File is too large. The limit is ${Math.round(perFile() / MB)} MB per file.` : (err.message || 'Server error') });
 });
 
 app.listen(PORT, () => console.log(`BCDB Case Management running on http://localhost:${PORT}${auth.DEV ? '  [DEV LOGIN ENABLED]' : ''}`));
