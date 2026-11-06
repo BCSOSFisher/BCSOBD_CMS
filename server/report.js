@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle,
-  ShadingType, ImageRun, Header, Footer, PageNumber, VerticalAlign, TableLayoutType, PageBreak,
+  ShadingType, ImageRun, Header, Footer, PageNumber, VerticalAlign, TableLayoutType, PageBreak, ExternalHyperlink,
 } = require('docx');
 
 const FONT = 'Arial';
@@ -78,6 +78,27 @@ const fmtDT = (s) => {
 };
 const dt = (date, time, tz) => [fmtDate(date), time, tz].filter(Boolean).join(' ');
 const yn = (b) => (b ? 'Yes' : 'No');
+
+// Table of external media links with clickable URLs
+function linksTable(links) {
+  const widths = [500, 2700, 1100, 5780];
+  const hr = new TableRow({ tableHeader: true, children: ['#', 'Title / Platform', 'Evidence Ref.', 'Link & Description'].map((h, i) => cell(h, { w: widths[i], fill: LABEL_FILL, bold: true })) });
+  const rows = links.map((l, i) => new TableRow({ cantSplit: true, children: [
+    cell(String(i + 1), { w: widths[0] }),
+    cell([para(l.data.title || 'Untitled', { bold: true, after: 20 }), para(platformOf(l.data.url), { size: 16, color: '666666', after: 0 })], { w: widths[1] }),
+    cell(l.data.evidence_ref || '—', { w: widths[2] }),
+    cell([
+      new Paragraph({ spacing: { after: l.data.description ? 40 : 0 }, children: [new ExternalHyperlink({ link: l.data.url, children: [new TextRun({ text: l.data.url, font: FONT, size: 17, color: '1F4FA0', underline: {} })] })] }),
+      ...(l.data.description ? [para(l.data.description, { size: 17, after: 0 })] : []),
+    ], { w: widths[3] }),
+  ] }));
+  return table([hr, ...rows], widths);
+}
+function platformOf(u) {
+  const h = (() => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } })();
+  const map = { 'youtube.com': 'YouTube', 'youtu.be': 'YouTube', 'medal.tv': 'Medal', 'streamable.com': 'Streamable', 'drive.google.com': 'Google Drive', 'docs.google.com': 'Google Docs', 'imgur.com': 'Imgur', 'i.imgur.com': 'Imgur', 'twitch.tv': 'Twitch', 'clips.twitch.tv': 'Twitch', 'cdn.discordapp.com': 'Discord', 'media.discordapp.net': 'Discord', 'gyazo.com': 'Gyazo' };
+  return map[h] || h || 'External link';
+}
 
 function imageSize(buf) {
   // PNG
@@ -392,12 +413,18 @@ async function buildCaseReport(bundle, { config, penalCode, user, uploadDir }) {
     ['Interviews Conducted:', yn(ivs.length)],
     ['Warrants Requested:', yn(warrants.length)],
     ['BOLO Implemented:', yn(S.by('bolo').length)],
-    ['Media / Photographs Logged:', `${bundle.files.length} file(s)`],
+    ['Media / Photographs Logged:', `${bundle.files.length} file(s), ${S.by('medialink').length} external link(s)`],
   ]));
 
   if (bundle.files.length) {
     H('Media & Attachments Index');
     body.push(grid(['#', 'File', 'Evidence Ref.', 'Caption', 'Uploaded'], bundle.files.map((f, i) => [String(i + 1), f.original_name, f.evidence_ref, f.caption, fmtDate(f.created_at)]), [500, 3000, 1300, 3580, 1700]));
+  }
+  if (S.by('medialink').length) {
+    H('External Media Links', 'Video and media hosted outside the system');
+    body.push(linksTable(S.by('medialink')));
+  }
+  if (bundle.files.length) {
     const photos = photoAppendix(bundle, uploadDir);
     if (photos.length) { body.push(new Paragraph({ children: [new PageBreak()] })); body.push(...sectionHead('Photographic Evidence Appendix')); body.push(...photos); }
   }
@@ -483,6 +510,8 @@ async function buildWarrantPacket(bundle, warrant, { config, penalCode, user, up
     const photos = photoAppendix({ ...bundle, files }, uploadDir);
     if (photos.length) { H('Photographic Exhibits'); body.push(...photos); }
   }
+  const mlinks = S.by('medialink').filter((l) => !d.evidence_ids?.length || ev.some((e) => e.data.ed === l.data.evidence_ref));
+  if (mlinks.length) { H('Video & Media Exhibits (Links)'); body.push(linksTable(mlinks)); }
 
   H('Affiant Declaration');
   const aff = d.affiant || bundle.lead?.display_name || '________________';

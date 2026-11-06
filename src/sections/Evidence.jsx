@@ -32,6 +32,7 @@ export default function Evidence({ b, reload, setSec }) {
       {shown.map((e) => {
         const d = e.data;
         const media = b.files.filter((f) => f.evidence_ref && f.evidence_ref === d.ed);
+        const mlinks = b.items.filter((i) => i.kind === 'medialink' && i.data.evidence_ref === d.ed);
         const supports = charges.flatMap((ch) => (ch.data.elements || []).map((el, k) => ((el.evidence || []).includes(e.id) ? `${ch.data.code} el. ${k + 1}` : null)).filter(Boolean));
         return (
           <div className="card" key={e.id}>
@@ -51,10 +52,11 @@ export default function Evidence({ b, reload, setSec }) {
               {d.storage && <span><b>Storage:</b> {d.storage}</span>}
             </div>
             {d.lab_result && <div className="small" style={{ marginTop: 8, background: 'var(--blue-soft)', borderRadius: 6, padding: '7px 10px' }}><b>Forensic result:</b> {d.lab_result}</div>}
-            {(supports.length > 0 || media.length > 0 || (d.custody || []).length > 0) && (
+            {(supports.length > 0 || media.length > 0 || mlinks.length > 0 || (d.custody || []).length > 0) && (
               <div className="row small" style={{ marginTop: 10, gap: 14 }}>
                 {supports.length > 0 && <span><b className="muted">Supports:</b> {supports.map((s) => <span key={s} className="chip" style={{ marginRight: 4 }}>{s}</span>)}</span>}
                 {media.length > 0 && <a onClick={() => setSec('media')} style={{ cursor: 'pointer' }}><Icon n="image" width="13" style={{ verticalAlign: -2 }} /> {media.length} media file(s)</a>}
+                {mlinks.map((l) => <a key={l.id} href={l.data.url} target="_blank" rel="noreferrer"><Icon n="external" width="13" style={{ verticalAlign: -2 }} /> {l.data.title || 'Media link'}</a>)}
                 {(d.custody || []).length > 0 && <a onClick={() => setCustody(e)} style={{ cursor: 'pointer' }}><Icon n="link" width="13" style={{ verticalAlign: -2 }} /> {d.custody.length} custody transfer(s)</a>}
               </div>
             )}

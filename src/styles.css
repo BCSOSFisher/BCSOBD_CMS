@@ -224,6 +224,7 @@ table.t tr.click:hover td { background: #f7f9fc; }
 .media .thumb { height: 130px; background: #e9edf3; display: grid; place-items: center; color: var(--faint); cursor: pointer; overflow: hidden; }
 .media .thumb img, .media .thumb video { width: 100%; height: 100%; object-fit: cover; }
 .media .thumb svg { width: 34px; height: 34px; }
+.media .thumb .plat svg { width: 11px; height: 11px; }
 .media .cap { padding: 8px 10px; font-size: 12.5px; }
 .media .cap b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .drop { border: 2px dashed var(--line-strong); border-radius: 8px; padding: 22px; text-align: center; color: var(--muted); cursor: pointer; background: #fafbfc; }

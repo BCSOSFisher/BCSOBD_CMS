@@ -1,7 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { Icon, Empty, Confirm, Modal, Field, useToast, fmtDate } from '../ui';
-import { SectionPanel } from './common';
+import { SectionPanel, ItemModal, useItems } from './common';
+
+// Recognise common clip/media hosts for a friendly label
+export function platformOf(u) {
+  let h = '';
+  try { h = new URL(u).hostname.replace(/^www\./, ''); } catch { return 'Link'; }
+  const map = { 'youtube.com': 'YouTube', 'youtu.be': 'YouTube', 'medal.tv': 'Medal', 'streamable.com': 'Streamable', 'drive.google.com': 'Google Drive', 'docs.google.com': 'Google Docs', 'imgur.com': 'Imgur', 'i.imgur.com': 'Imgur', 'twitch.tv': 'Twitch', 'clips.twitch.tv': 'Twitch', 'cdn.discordapp.com': 'Discord', 'media.discordapp.net': 'Discord', 'gyazo.com': 'Gyazo' };
+  return map[h] || h;
+}
+function ytThumb(u) {
+  const m = String(u).match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null;
+}
 
 const isImg = (f) => /^image\//.test(f.mime || '');
 const isVid = (f) => /^video\//.test(f.mime || '');
@@ -19,14 +31,20 @@ export default function Media({ b, reload }) {
   const [filter, setFilter] = useState('');
   const evidence = b.items.filter((i) => i.kind === 'evidence');
   const [store, setStore] = useState(null);
+  const [linkEdit, setLinkEdit] = useState(null);
+  const [linkDel, setLinkDel] = useState(null);
+  const I = useItems(b, reload);
+  const links = b.items.filter((i) => i.kind === 'medialink');
+  const photoCount = b.files.filter(isImg).length;
   useEffect(() => { api.get('/api/storage').then(setStore).catch(() => {}); }, [b.files.length]);
   const upload = async (files) => {
     if (!files?.length) return;
     if (store) {
       const big = [...files].find((f) => f.size > store.perFile);
       if (big) return toast(`${big.name} is larger than the ${size(store.perFile)} per-file limit.`, true);
-      const left = store.perCase - b.files.length;
-      if (files.length > left) return toast(left > 0 ? `Only ${left} more upload(s) allowed on this case (limit ${store.perCase}).` : `This case has reached its limit of ${store.perCase} uploads. Delete a file before adding more.`, true);
+      const newPhotos = [...files].filter((f) => /^image\//.test(f.type)).length;
+      const left = store.perCase - photoCount;
+      if (newPhotos > left) return toast(left > 0 ? `Only ${left} more photo(s) allowed on this case (limit ${store.perCase}).` : `This case has reached its limit of ${store.perCase} photos. Delete a photo first, or add the media as a link.`, true);
       const total = [...files].reduce((a, f) => a + f.size, 0);
       if (store.limit && store.used + total > store.limit) return toast(`Not enough media storage: ${size(store.limit - store.used)} left of ${size(store.limit)}.`, true);
     }
@@ -37,19 +55,22 @@ export default function Media({ b, reload }) {
     try { await api.upload(`/api/cases/${b.case.id}/files`, fd); await reload(); toast(`${files.length} file(s) uploaded`); } catch (e) { toast(e.message, true); }
     setBusy(false);
   };
-  const shown = b.files.filter((f) => !filter || (filter === 'img' ? isImg(f) : filter === 'vid' ? isVid(f) : !isImg(f) && !isVid(f)));
+  const shown = filter === 'link' ? [] : b.files.filter((f) => !filter || (filter === 'img' ? isImg(f) : filter === 'vid' ? isVid(f) : !isImg(f) && !isVid(f)));
+  const shownLinks = !filter || filter === 'link' || filter === 'vid' ? links : [];
   return (
     <SectionPanel title="Media & Attachments" sub="Photos, videos, documents and recordings" actions={<>
       <select style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }} value={filter} onChange={(e) => setFilter(e.target.value)}>
-        <option value="">All files</option><option value="img">Photos</option><option value="vid">Videos</option><option value="doc">Documents & other</option>
-      </select></>}>
+        <option value="">All files</option><option value="img">Photos</option><option value="vid">Videos</option><option value="doc">Documents & other</option><option value="link">Media links</option>
+      </select>
+      {b.canEdit && <button className="btn primary sm" onClick={() => setLinkEdit({ data: { evidence_ref: ref } })}><Icon n="link" />Add Video / Media Link</button>}</>}>
       {b.canEdit && (
         <div style={{ marginBottom: 16 }}>
           <div className={'drop' + (over ? ' over' : '')} onClick={() => inp.current.click()}
             onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}>
             <Icon n="image" width="26" height="26" /><div style={{ marginTop: 6 }}><b>{busy ? 'Uploading…' : 'Drop files here or click to upload'}</b></div>
-            <div className="small faint">Images, video, audio, PDFs and documents · up to {store ? size(store.perFile) : '500 MB'} each{store ? ` · max ${store.perCase} per case` : ''}</div>
+            <div className="small faint">Images, video, audio, PDFs and documents · up to {store ? size(store.perFile) : '500 MB'} each{store ? ` · max ${store.perCase} photos per case` : ''}</div>
+            <div className="small faint" style={{ marginTop: 2 }}>Long videos? Use <b>Add Video / Media Link</b> for Medal, YouTube, Streamable or Drive clips — links don’t count toward the limit.</div>
           </div>
           <input ref={inp} type="file" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
           <div className="row small" style={{ marginTop: 8 }}>
@@ -61,18 +82,47 @@ export default function Media({ b, reload }) {
         </div>
       )}
       {store && (() => {
-        const pct = b.files.length / store.perCase;
+        const pct = photoCount / store.perCase;
         return (
           <div style={{ marginBottom: 14 }}>
             <div className="row small" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
-              <span className="muted">Uploads on this case</span>
-              <b style={{ color: pct >= 1 ? 'var(--red)' : undefined }}>{b.files.length} of {store.perCase} used</b>
+              <span className="muted">Photos on this case <span className="faint">(links and other files don’t count)</span></span>
+              <b style={{ color: pct >= 1 ? 'var(--red)' : undefined }}>{photoCount} of {store.perCase} used</b>
             </div>
             <div className="bar"><i style={{ width: `${Math.min(100, pct * 100)}%`, background: pct >= 1 ? 'var(--red)' : pct >= 0.8 ? 'var(--amber)' : undefined }} /></div>
           </div>
         );
       })()}
-      {!shown.length ? <Empty icon="image" title="No media uploaded" /> : (
+      {shownLinks.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div className="tag" style={{ marginBottom: 8 }}>Video & Media Links</div>
+          <div className="media-grid">
+            {shownLinks.map((l) => {
+              const th = ytThumb(l.data.url);
+              return (
+                <div className="media" key={l.id}>
+                  <a className="thumb" href={l.data.url} target="_blank" rel="noreferrer" style={{ position: 'relative', textDecoration: 'none' }}>
+                    <Icon n="video" />{th && <img src={th} alt="" loading="lazy" style={{ position: 'absolute', inset: 0 }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />}
+                    <span className="pill navy plat" style={{ position: 'absolute', left: 8, top: 8, zIndex: 1 }}><Icon n="external" />{platformOf(l.data.url)}</span>
+                  </a>
+                  <div className="cap">
+                    <b title={l.data.url}>{l.data.title || l.data.url}</b>
+                    {l.data.description && <div className="faint" style={{ fontSize: 11.5, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.data.description}</div>}
+                    <div className="row" style={{ gap: 6, marginTop: 4 }}>
+                      {l.data.evidence_ref && <span className="chip">{l.data.evidence_ref}</span>}
+                      <span className="faint" style={{ fontSize: 11.5 }}>Link · {fmtDate(l.created_at)}</span>
+                      <span className="spacer" />
+                      <a className="icon-btn" href={l.data.url} target="_blank" rel="noreferrer" title="Open"><Icon n="external" /></a>
+                      {b.canEdit && <><button className="icon-btn" onClick={() => setLinkEdit(l)}><Icon n="edit" /></button><button className="icon-btn" onClick={() => setLinkDel(l)}><Icon n="trash" /></button></>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {filter === 'link' ? (!links.length && <Empty icon="link" title="No media links yet" />) : !shown.length ? (!shownLinks.length && <Empty icon="image" title="No media uploaded" />) : (
         <div className="media-grid">
           {shown.map((f) => (
             <div className="media" key={f.id}>
@@ -93,7 +143,16 @@ export default function Media({ b, reload }) {
           ))}
         </div>
       )}
-      <p className="small faint" style={{ marginBottom: 0, marginTop: 14 }}>Photos (PNG/JPG/GIF) are embedded in the downloaded case report’s Photographic Evidence Appendix. Videos and documents are listed in the media index.</p>
+      <p className="small faint" style={{ marginBottom: 0, marginTop: 14 }}>Photos (PNG/JPG/GIF) are embedded in the downloaded case report’s Photographic Evidence Appendix. Videos, documents and media links are listed in the report with clickable links.</p>
+      {linkEdit && <ItemModal b={b} wide={false} title={linkEdit.id ? 'Edit Media Link' : 'Add Video / Media Link'} initial={linkEdit.data}
+        fields={[
+          { k: 'url', label: 'Link', span: 4, ph: 'https://medal.tv/… or https://youtu.be/…' },
+          { k: 'title', label: 'Title', span: 4, ph: 'e.g. Bodycam — suspect fleeing scene' },
+          { k: 'evidence_ref', label: 'Evidence Reference', type: 'select', options: evidence.map((e) => e.data.ed), span: 2 },
+          { k: 'description', label: 'Description', type: 'textarea', rows: 3, ph: 'What the clip shows, timestamps of interest…' },
+        ]}
+        onSave={(v) => (linkEdit.id ? I.update(linkEdit.id, v) : I.add('medialink', v))} onClose={() => setLinkEdit(null)} />}
+      {linkDel && <Confirm text={`Remove the link “${linkDel.data.title || linkDel.data.url}”?`} onYes={() => I.remove(linkDel.id)} onClose={() => setLinkDel(null)} />}
       {view && (
         <div className="lightbox" onClick={() => setView(null)}>
           <div onClick={(e) => e.stopPropagation()}>

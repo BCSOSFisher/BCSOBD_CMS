@@ -307,8 +307,9 @@ app.delete('/api/case-persons/:lid', requireUser, (req, res) => {
 });
 
 // ---------- generic case items ----------
-const KINDS = ['evidence', 'interview', 'note', 'timeline', 'warrant', 'bolo', 'vehicle', 'charge', 'custom', 'surveillance', 'informant', 'operation', 'financial'];
-const KIND_LABEL = { evidence: 'Evidence', interview: 'Interview', note: 'Note', timeline: 'Timeline event', warrant: 'Warrant', bolo: 'BOLO', vehicle: 'Vehicle', charge: 'Charge', custom: 'Section', surveillance: 'Surveillance entry', informant: 'Informant entry', operation: 'Operation', financial: 'Financial record' };
+const KINDS = ['evidence', 'interview', 'note', 'timeline', 'warrant', 'bolo', 'vehicle', 'charge', 'custom', 'surveillance', 'informant', 'operation', 'financial', 'medialink'];
+const KIND_LABEL = { evidence: 'Evidence', interview: 'Interview', note: 'Note', timeline: 'Timeline event', warrant: 'Warrant', bolo: 'BOLO', vehicle: 'Vehicle', charge: 'Charge', custom: 'Section', surveillance: 'Surveillance entry', informant: 'Informant entry', operation: 'Operation', financial: 'Financial record', medialink: 'Media link' };
+const validUrl = (u) => { try { return ['http:', 'https:'].includes(new URL(String(u)).protocol); } catch { return false; } };
 function itemLabel(kind, d) {
   return [d.ed, d.code, d.title, d.name, d.type, d.plate, d.subject].filter(Boolean).slice(0, 2).join(' — ') || '';
 }
@@ -323,6 +324,7 @@ app.post('/api/cases/:id/items', requireUser, (req, res) => {
     data.ed = data.ed || `ED-${String(k).padStart(2, '0')}`;
   }
   if (kind === 'note') data.author = data.author || req.user.display_name;
+  if (kind === 'medialink' && !validUrl(data.url)) return res.status(400).json({ error: 'Enter a full link starting with https://' });
   const r = db.prepare('INSERT INTO items (case_id,kind,data,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?)').run(c.id, kind, JSON.stringify(data), req.user.id, now(), now());
   audit(c.id, req.user.id, `${KIND_LABEL[kind]} added`, itemLabel(kind, data));
   touch(c.id);
@@ -339,6 +341,7 @@ function loadItem(req, res) {
 app.patch('/api/items/:itemId', requireUser, (req, res) => {
   const r = loadItem(req, res); if (!r) return;
   const data = { ...r.it.data, ...(req.body.data || {}) };
+  if (r.it.kind === 'medialink' && !validUrl(data.url)) return res.status(400).json({ error: 'Enter a full link starting with https://' });
   db.prepare('UPDATE items SET data=?, updated_at=? WHERE id=?').run(JSON.stringify(data), now(), r.it.id);
   if (!req.body.silent) audit(r.c.id, req.user.id, `${KIND_LABEL[r.it.kind]} updated`, itemLabel(r.it.kind, data));
   touch(r.c.id);
@@ -369,11 +372,12 @@ const perFile = () => Number(process.env.MAX_UPLOAD_MB || 500) * MB;
 const perCase = () => Number(process.env.MAX_FILES_PER_CASE || 15);
 const mediaLimit = () => (process.env.MEDIA_LIMIT_MB ? Number(process.env.MEDIA_LIMIT_MB) * MB : null);
 const mediaUsed = () => db.prepare('SELECT COALESCE(SUM(size),0) n FROM files').get().n;
-const caseCount = (id) => db.prepare('SELECT COUNT(*) n FROM files WHERE case_id=?').get(id).n;
+// Only photo uploads count toward the per-case limit (media links and other file types don't).
+const caseCount = (id) => db.prepare("SELECT COUNT(*) n FROM files WHERE case_id=? AND mime LIKE 'image/%'").get(id).n;
+const isPhoto = (f) => /^image\//.test(f.mimetype || f.mime || '');
 const fullMsg = () => `Media storage is full (${Math.round(mediaUsed() / MB)} MB of ${Math.round(mediaLimit() / MB)} MB used). Delete old files or ask command to raise the limit.`;
-const caseFullMsg = (id) => `This case already has ${caseCount(id)} of ${perCase()} allowed uploads. Delete a file before adding more.`;
+const caseFullMsg = (id) => `This case already has ${caseCount(id)} of ${perCase()} allowed photos. Delete a photo before adding more, or add the media as a link.`;
 function checkQuota(req, res, next) {
-  if (req.caseObj && caseCount(req.caseObj.id) >= perCase()) return res.status(413).json({ error: caseFullMsg(req.caseObj.id) });
   const lim = mediaLimit();
   if (lim && mediaUsed() + Number(req.headers['content-length'] || 0) > lim) return res.status(413).json({ error: fullMsg() });
   next();
@@ -381,7 +385,8 @@ function checkQuota(req, res, next) {
 // After saving: if the batch broke a limit, remove the new files again.
 function enforceQuota(files, res, caseId) {
   let err = null;
-  if (caseId && caseCount(caseId) + files.length > perCase()) err = `Only ${Math.max(0, perCase() - caseCount(caseId))} more upload(s) allowed on this case (limit ${perCase()}). Nothing was uploaded.`;
+  const photos = files.filter(isPhoto).length;
+  if (caseId && photos && caseCount(caseId) + photos > perCase()) err = caseCount(caseId) >= perCase() ? caseFullMsg(caseId) : `Only ${perCase() - caseCount(caseId)} more photo(s) allowed on this case (limit ${perCase()}). Nothing was uploaded.`;
   const lim = mediaLimit();
   if (!err && lim && mediaUsed() + files.reduce((a, f) => a + f.size, 0) > lim) err = fullMsg();
   if (!err) return true;

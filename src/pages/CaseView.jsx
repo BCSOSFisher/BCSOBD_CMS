@@ -38,7 +38,7 @@ export default function CaseView() {
   const count = (k) => b.items.filter((i) => i.kind === k).length;
   const counts = {
     persons: b.persons.length, charges: count('charge'), evidence: count('evidence'), interviews: count('interview'), notes: count('note'),
-    warrants: count('warrant'), media: b.files.length, links: b.links.length, vehicles: count('vehicle'), bolos: count('bolo'),
+    warrants: count('warrant'), media: b.files.length + count('medialink'), links: b.links.length, vehicles: count('vehicle'), bolos: count('bolo'),
     surveillance: count('surveillance'), informants: count('informant'), operations: count('operation'), financial: count('financial'),
   };
   const enabled = c.sections || [];
