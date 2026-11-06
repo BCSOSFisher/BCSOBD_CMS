@@ -73,7 +73,7 @@ function loadCaseForEdit(req, res) {
   return c;
 }
 function touch(caseId) { db.prepare('UPDATE cases SET updated_at=? WHERE id=?').run(now(), caseId); }
-const userPublic = (u) => u && ({ id: u.id, display_name: u.display_name, username: u.username, avatar: u.avatar, rank: u.rank, callsign: u.callsign });
+const userPublic = (u) => u && ({ id: u.id, display_name: u.display_name, username: u.username, avatar: u.avatar, rank: u.rank, callsign: u.callsign, units: J(u.units, []) });
 
 function caseBundle(c, user) {
   const members = db.prepare(`SELECT m.role, u.* FROM case_members m JOIN users u ON u.id=m.user_id WHERE m.case_id=?`).all(c.id)

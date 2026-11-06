@@ -94,6 +94,10 @@ CREATE TABLE IF NOT EXISTS audit (
 CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT);
 `);
 
+// lightweight migrations
+const cols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+if (!cols.includes('units')) db.exec("ALTER TABLE users ADD COLUMN units TEXT DEFAULT '[]'");
+
 const J = (s, d) => { try { return s == null ? d : JSON.parse(s); } catch { return d; } };
 
 module.exports = { db, J, DATA_DIR, UPLOAD_DIR };

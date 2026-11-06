@@ -63,6 +63,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
      - Detective II → `ROLE_DET2`
      - Detective I → `ROLE_DET1`
    - If several roles should map to one rank, separate their IDs with commas.
+   - Optional unit roles: `UNIT_ROLE_HOM`, `UNIT_ROLE_GNU`, `UNIT_ROLE_VICE` (and `UNIT_ROLE_VCU`, `UNIT_ROLE_SOD` if you add those roles). Units appear on the roster and pre-select the division when a detective opens a new case.
 
 ## 2. Deploy (Railway, about 10 minutes, roughly $5/month)
 

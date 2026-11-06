@@ -14,12 +14,13 @@ export default function Roster() {
       <div className="page-head"><div><h1>Personnel Roster</h1><p>Ranks are synced from Discord roles at each sign-in. To change someone’s rank, change their role in Discord.</p></div></div>
       <div className="panel">
         <table className="t">
-          <thead><tr><th style={{ width: 50 }} /><th>Name</th><th>Rank</th><th>Callsign / Badge #</th><th>Discord</th><th>Last sign-in</th></tr></thead>
+          <thead><tr><th style={{ width: 50 }} /><th>Name</th><th>Rank</th><th>Unit(s)</th><th>Callsign / Badge #</th><th>Discord</th><th>Last sign-in</th></tr></thead>
           <tbody>
             {[...users].sort((a, b) => order.indexOf(a.rank) - order.indexOf(b.rank) || a.display_name.localeCompare(b.display_name)).map((u) => (
               <tr key={u.id}>
                 <td><Avatar u={u} sm /></td><td><b>{u.display_name}</b></td>
                 <td><span className={`pill ${config.commandRanks.includes(u.rank) ? 'navy' : u.rank === 'lead' ? 'blue' : 'gray'}`}>{config.ranks[u.rank]}</span></td>
+                <td>{(u.units || []).map((x) => <span key={x} className="tag" style={{ marginRight: 4 }}>{config.divisions.find((d) => d.id === x)?.short || x}</span>)}{!(u.units || []).length && <span className="faint">—</span>}</td>
                 <td>
                   {cmd || me.id === u.id ? (
                     <input style={{ width: 120, padding: '4px 8px' }} defaultValue={u.callsign || ''} onChange={(e) => setCs({ ...cs, [u.id]: e.target.value })}

@@ -64,7 +64,7 @@ export function NewCaseModal({ onClose }) {
   const { config, users, me } = useApp();
   const toast = useToast();
   const nav = useNavigate();
-  const [v, setV, bind] = useForm({ division: '', title: '', incident_date: today(), incident_time: nowTime(), incident_tz: localTZ(), location: '', summary: '', other_agencies: [], assistants: [], opened_at: today() });
+  const [v, setV, bind] = useForm({ division: (me.units || []).find((u) => config.divisions.some((d) => d.id === u)) || '', title: '', incident_date: today(), incident_time: nowTime(), incident_tz: localTZ(), location: '', summary: '', other_agencies: [], assistants: [], opened_at: today() });
   const [busy, setBusy] = useState(false);
   const toggle = (k, x) => setV((o) => ({ ...o, [k]: o[k].includes(x) ? o[k].filter((y) => y !== x) : [...o[k], x] }));
   const div = config.divisions.find((d) => d.id === v.division);

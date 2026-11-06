@@ -12,6 +12,9 @@ const DEV = process.env.DEV_LOGIN === 'true';
 const API = 'https://discord.com/api/v10';
 
 const ids = (s) => String(s).split(',').map((x) => x.trim()).filter(Boolean);
+// Unit membership roles: UNIT_ROLE_<DIVISION ID>=roleId (e.g. UNIT_ROLE_HOM, UNIT_ROLE_GNU, UNIT_ROLE_VICE)
+const UNIT_ROLES = Object.entries(process.env).filter(([k]) => k.startsWith('UNIT_ROLE_')).map(([k, v]) => [k.slice(10), ids(v)]);
+const unitsFromRoles = (roles) => UNIT_ROLES.filter(([, list]) => list.some((r) => roles.includes(r))).map(([u]) => u);
 // Highest role wins.
 const RANK_ROLES = [
   ['bureau_lead', ids(ROLE_BUREAU_LEAD)],
@@ -26,15 +29,15 @@ function rankFromRoles(roles) {
   return null;
 }
 
-function upsertUser({ discord_id, username, display_name, avatar, rank }) {
+function upsertUser({ discord_id, username, display_name, avatar, rank, units = [] }) {
   const at = new Date().toISOString();
   const ex = db.prepare('SELECT id FROM users WHERE discord_id=?').get(discord_id);
   if (ex) {
-    db.prepare('UPDATE users SET username=?, display_name=?, avatar=?, rank=?, last_login=? WHERE id=?').run(username, display_name, avatar, rank, at, ex.id);
+    db.prepare('UPDATE users SET username=?, display_name=?, avatar=?, rank=?, units=?, last_login=? WHERE id=?').run(username, display_name, avatar, rank, JSON.stringify(units), at, ex.id);
     return ex.id;
   }
-  return Number(db.prepare('INSERT INTO users (discord_id,username,display_name,avatar,rank,last_login) VALUES (?,?,?,?,?,?)')
-    .run(discord_id, username, display_name, avatar, rank, at).lastInsertRowid);
+  return Number(db.prepare('INSERT INTO users (discord_id,username,display_name,avatar,rank,units,last_login) VALUES (?,?,?,?,?,?,?)')
+    .run(discord_id, username, display_name, avatar, rank, JSON.stringify(units), at).lastInsertRowid);
 }
 
 function deny(res, msg) {
@@ -82,7 +85,7 @@ function mount(app) {
       const avatar = me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128` : null;
       const uid = upsertUser({
         discord_id: me.id, username: me.username,
-        display_name: member.nick || me.global_name || me.username, avatar, rank,
+        display_name: member.nick || me.global_name || me.username, avatar, rank, units: unitsFromRoles(member.roles || []),
       });
       req.session.uid = uid;
       res.redirect('/');
@@ -97,7 +100,8 @@ function mount(app) {
     if (!DEV) return res.status(404).end();
     const rank = ['bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1'].includes(req.query.rank) ? req.query.rank : 'det1';
     const name = String(req.query.name || 'Test Detective');
-    req.session.uid = upsertUser({ discord_id: 'dev-' + name.toLowerCase().replace(/\W+/g, '-'), username: name, display_name: name, avatar: null, rank });
+    const units = String(req.query.units || '').split(',').filter(Boolean);
+    req.session.uid = upsertUser({ discord_id: 'dev-' + name.toLowerCase().replace(/\W+/g, '-'), username: name, display_name: name, avatar: null, rank, units });
     res.redirect('/');
   });
 
