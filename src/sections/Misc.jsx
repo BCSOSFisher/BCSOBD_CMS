@@ -102,7 +102,7 @@ export function Links({ b, reload }) {
         <table className="t" style={{ border: '1px solid var(--line)' }}>
           <thead><tr><th>Case</th><th>Title</th><th>Division</th><th>Status</th><th>Relationship</th><th /></tr></thead>
           <tbody>{b.links.map((l) => (
-            <tr key={l.id}><td className="mono"><Link to={`/cases/${l.case_id}`}>#{l.number} | {l.code}</Link></td><td>{l.title}</td>
+            <tr key={l.id}><td className="mono"><Link to={`/cases/${l.case_id}`}>#{l.number} | {l.code}</Link></td><td>{l.restricted ? <span className="classified-pill"><Icon n="lock" />CLASSIFIED</span> : <>{l.title}{l.classified && <span className="classified-pill sm" style={{ marginLeft: 6 }}><Icon n="lock" />Classified</span>}</>}</td>
               <td>{config.divisions.find((d) => d.id === l.division)?.short}</td><td><Status s={l.status} /></td><td className="muted">{l.reason}</td>
               <td>{b.canEdit && <button className="icon-btn" onClick={async () => { await api.del(`/api/links/${l.id}`); reload(); }}><Icon n="x" /></button>}</td></tr>
           ))}</tbody>

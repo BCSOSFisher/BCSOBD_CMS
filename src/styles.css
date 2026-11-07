@@ -276,6 +276,18 @@ table.t tr.click:hover td { background: #f7f9fc; }
 .inactive-notice .ico { width: 34px; height: 34px; border-radius: 50%; background: rgba(161, 92, 7, .12); display: grid; place-items: center; flex: none; }
 .inactive-notice .ico svg { width: 18px; height: 18px; }
 
+/* classified cases */
+.classified-pill { display: inline-flex; align-items: center; gap: 5px; background: #2a0d0b; color: #fecdca; border: 1px solid #7a1712; border-radius: 4px; padding: 2px 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; }
+.classified-pill svg { width: 12px; height: 12px; }
+.classified-pill.sm { font-size: 10.5px; padding: 1px 6px; letter-spacing: .05em; vertical-align: 1px; }
+.classified-tag { display: inline-flex; align-items: center; gap: 5px; margin-left: 12px; background: #b42318; color: #fff; border-radius: 4px; padding: 2px 8px; font-family: Inter, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .06em; vertical-align: 1px; }
+.classified-tag svg { width: 12px; height: 12px; }
+.classified-block { max-width: 560px; margin: 40px auto; background: #fff; border: 1px solid #f3c1bb; border-top: 4px solid var(--red); border-radius: 10px; padding: 32px; text-align: center; box-shadow: var(--shadow); }
+.classified-block h2 { margin: 6px 0 10px; font-size: 22px; }
+.classified-block p { line-height: 1.55; }
+.classified-icon { width: 54px; height: 54px; border-radius: 50%; background: var(--red-soft); color: var(--red); display: grid; place-items: center; margin: 0 auto 12px; }
+.classified-icon svg { width: 26px; height: 26px; }
+
 /* ================= Mobile & tablet ================= */
 .menu-btn, .top-badge, .nav-scrim { display: none; }
 @media (max-width: 900px) {

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { api, download } from '../api';
 import { useApp } from '../App';
-import { Icon, Modal, Confirm, useToast, fmtDate } from '../ui';
+import { Icon, Modal, Confirm, Field, useToast, fmtDate } from '../ui';
 import { GenericSection } from '../sections/common';
 import { Overview, Scene, Coroner } from '../sections/Overview';
 import PersonsSection from '../sections/Persons';
@@ -29,9 +29,20 @@ export default function CaseView() {
   const sec = sp.get('s') || 'overview';
   const setSec = (s) => { const n = new URLSearchParams(sp); n.set('s', s); setSp(n, { replace: true }); window.scrollTo({ top: 0 }); };
 
-  const reload = useCallback(() => api.get(`/api/cases/${id}`).then(setB).catch((e) => setErr(e.message)), [id]);
+  const reload = useCallback(() => api.get(`/api/cases/${id}`).then((x) => { setErr(null); setB(x); }).catch((e) => setErr(e)), [id]);
+  const [classify, setClassify] = useState(false);
   useEffect(() => { reload(); }, [reload]);
-  if (err) return <div className="panel panel-b">{err}</div>;
+  if (err?.data?.code === 'classified') return (
+    <div className="classified-block">
+      <div className="classified-icon"><Icon n="lock" /></div>
+      <div className="mono" style={{ color: 'var(--red)', fontSize: 12.5, letterSpacing: '.06em' }}>CASE #{err.data.number} | {err.data.case_code}</div>
+      <h2>Classified Case</h2>
+      <p>This case has been classified by its Lead Investigator. Access is restricted to: <b>{err.data.units.join(', ')}</b>, the assigned investigators, and Bureau command.</p>
+      <p className="small muted">Your attempt to open this case has been recorded. If you need access, ask the Lead Investigator to add you to the case.</p>
+      <button className="btn" onClick={() => nav('/cases')}>Back to Case Files</button>
+    </div>
+  );
+  if (err) return <div className="panel panel-b">{err.message}</div>;
   if (!b) return <div className="muted">Loading case file…</div>;
   const c = b.case;
   const div = config.divisions.find((d) => d.id === c.division);
@@ -82,7 +93,7 @@ export default function CaseView() {
   return (
     <>
       <div className="case-head">
-        <div className="num">Case #{c.number} | {c.code}</div>
+        <div className="num">Case #{c.number} | {c.code}{c.secure?.on ? <span className="classified-tag"><Icon n="lock" />CLASSIFIED · {b.classifiedUnits.join(', ')}</span> : null}</div>
         <h1>{c.title}</h1>
         <div className="meta">
           <div><span>Division</span><b>{div?.name}</b></div>
@@ -98,6 +109,7 @@ export default function CaseView() {
           </div>
         </div>
         <div className="actions">
+          {b.canClassify && <button className="btn" style={{ background: c.secure?.on ? '#7a1712' : 'transparent', color: '#fff', borderColor: c.secure?.on ? '#b42318' : '#33476b' }} onClick={() => setClassify(true)}><Icon n="lock" />{c.secure?.on ? 'Classified' : 'Classify'}</button>}
           <button className="btn gold" onClick={report} disabled={busy}><Icon n="download" />{busy ? 'Generating…' : 'Download Report'}</button>
           {b.isSupervisor && <button className="btn" style={{ background: 'transparent', color: '#c8d1e0', borderColor: '#33476b' }} onClick={() => setDelCase(true)} title="Delete case"><Icon n="trash" /></button>}
         </div>
@@ -150,8 +162,47 @@ export default function CaseView() {
           </div>
         </Modal>
       )}
+      {classify && <ClassifyModal b={b} reload={reload} onClose={() => setClassify(false)} />}
       {delCase && <Confirm text={`Permanently delete case ${c.code} and all of its evidence, media and records? This cannot be undone.`}
         onYes={async () => { await api.del(`/api/cases/${c.id}`); toast('Case deleted'); nav('/cases'); }} onClose={() => setDelCase(false)} />}
     </>
+  );
+}
+
+function ClassifyModal({ b, reload, onClose }) {
+  const { config, users } = useApp();
+  const toast = useToast();
+  const c = b.case;
+  const on = !!c.secure?.on;
+  const [units, setUnits] = useState(on ? c.secure.units : [c.division]);
+  const [reason, setReason] = useState(c.secure?.reason || '');
+  const tog = (id) => setUnits((u) => (u.includes(id) ? u.filter((x) => x !== id) : [...u, id]));
+  const memberCount = (id) => users.filter((u) => u.active && (u.units || []).includes(id)).length;
+  const save = async () => {
+    try { await api.post(`/api/cases/${c.id}/classify`, { units, reason }); await reload(); toast(on ? 'Classification updated' : 'Case classified'); onClose(); } catch (e) { toast(e.message, true); }
+  };
+  const lift = async () => {
+    try { await api.post(`/api/cases/${c.id}/declassify`); await reload(); toast('Classification removed'); onClose(); } catch (e) { toast(e.message, true); }
+  };
+  return (
+    <Modal title={on ? 'Classified Case Settings' : 'Classify This Case'} onClose={onClose} footer={<>
+      {on && <button className="btn danger" style={{ marginRight: 'auto' }} onClick={lift}>Remove Classification</button>}
+      <button className="btn" onClick={onClose}>Cancel</button>
+      <button className="btn primary" disabled={!units.length} onClick={save}><Icon n="lock" />{on ? 'Save' : 'Classify Case'}</button></>}>
+      <p style={{ marginTop: 0 }}>Only the units you select below can open this case. Everyone else will see it as <b>CLASSIFIED</b> with no details, and it won’t appear in their searches.</p>
+      <div className="small muted" style={{ marginBottom: 14 }}>Always allowed: investigators assigned to this case, and Bureau command (Lead, Co-Lead, Supervisors) for oversight and sign-off.</div>
+      <div className="form">
+        <Field label="Units with access">
+          <div style={{ display: 'grid', gap: 6 }}>
+            {config.divisions.map((d) => (
+              <label key={d.id} className="check"><input type="checkbox" checked={units.includes(d.id)} onChange={() => tog(d.id)} />
+                {d.name} <span className="faint small">· {memberCount(d.id)} member(s) via Discord unit role</span></label>
+            ))}
+          </div>
+        </Field>
+        <Field label="Reason (optional)"><input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Internal investigation / Active CI / Ongoing operation" /></Field>
+      </div>
+      {on && <p className="small faint" style={{ marginBottom: 0 }}>Classified by {c.secure.by} on {fmtDate(c.secure.at)}.</p>}
+    </Modal>
   );
 }

@@ -103,6 +103,10 @@ for (const [c, def] of [['active', 'INTEGER DEFAULT 1'], ['deactivated_at', 'TEX
   if (!cols.includes(c)) db.exec(`ALTER TABLE users ADD COLUMN ${c} ${def}`);
 }
 
+// Classified cases: secure = {on:1, units:[division ids], by, by_id, at, reason}
+const caseCols = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name);
+if (!caseCols.includes('secure')) db.exec("ALTER TABLE cases ADD COLUMN secure TEXT DEFAULT '{}'");
+
 const J = (s, d) => { try { return s == null ? d : JSON.parse(s); } catch { return d; } };
 
 module.exports = { db, J, DATA_DIR, UPLOAD_DIR };

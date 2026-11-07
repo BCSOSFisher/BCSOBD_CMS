@@ -55,7 +55,7 @@ export default function PersonView() {
               <table className="t"><thead><tr><th>Case</th><th>Title</th><th>Role</th><th>Status</th><th>Opened</th></tr></thead>
                 <tbody>{d.cases.map((c) => (
                   <tr key={c.id + c.role} className="click" onClick={() => nav(`/cases/${c.id}`)}>
-                    <td className="mono">#{c.number} | {c.code}</td><td><b>{c.title}</b>{c.notes && <div className="small muted">{c.notes}</div>}</td>
+                    <td className="mono">#{c.number} | {c.code}</td><td>{c.restricted ? <span className="classified-pill"><Icon n="lock" />CLASSIFIED</span> : <><b>{c.title}</b>{c.classified && <span className="classified-pill sm" style={{ marginLeft: 6 }}><Icon n="lock" />Classified</span>}</>}{c.notes && <div className="small muted">{c.notes}</div>}</td>
                     <td><RolePill r={c.role} /></td><td><Status s={c.status} /></td><td className="muted small">{fmtDate(c.opened_at)}</td>
                   </tr>))}</tbody></table>
             ) : <Empty title="Not linked to any case" />}

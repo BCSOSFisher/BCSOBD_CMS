@@ -43,10 +43,10 @@ export default function Cases() {
               {rows.map((c) => (
                 <tr key={c.id} className="click" onClick={() => nav(`/cases/${c.id}`)}>
                   <td className="mono" style={{ whiteSpace: 'nowrap' }}>#{c.number} | {c.code}</td>
-                  <td><b>{c.title}</b>{c.location && <div className="small muted">{c.location}</div>}</td>
+                  <td>{c.restricted ? <><span className="classified-pill"><Icon n="lock" />CLASSIFIED</span><div className="small faint" style={{ marginTop: 4 }}>Restricted to {c.classified_units.join(', ')}</div></> : <><b>{c.title}</b>{c.classified && <span className="classified-pill sm" style={{ marginLeft: 6 }}><Icon n="lock" />Classified</span>}{c.location && <div className="small muted">{c.location}</div>}</>}</td>
                   <td>{config.divisions.find((d) => d.id === c.division)?.short}</td>
-                  <td>{c.lead_name}</td>
-                  <td><Status s={c.status} />{JSON.parse(c.closure || '{}').requested ? <div style={{ marginTop: 4 }}><span className="pill amber">Awaiting sign-off</span></div> : null}</td>
+                  <td>{c.restricted ? <span className="faint">—</span> : c.lead_name}</td>
+                  <td>{c.restricted ? <span className="faint">—</span> : <Status s={c.status} />}{JSON.parse(c.closure || '{}').requested ? <div style={{ marginTop: 4 }}><span className="pill amber">Awaiting sign-off</span></div> : null}</td>
                   <td className="muted small">{fmtDate(c.opened_at)}</td>
                   <td className="muted small">{ago(c.updated_at)}</td>
                 </tr>

@@ -61,7 +61,7 @@ export default function Dashboard() {
               <table className="t"><thead><tr><th>Case</th><th>Title</th><th>Status</th><th>Updated</th></tr></thead><tbody>
                 {d.mine.slice(0, 10).map((c) => (
                   <tr key={c.id} className="click" onClick={() => nav(`/cases/${c.id}`)}>
-                    <td className="mono">#{c.number} | {c.code}</td><td><b>{c.title}</b><div className="small muted">{config.divisions.find((x) => x.id === c.division)?.short} · Lead: {c.lead_name}</div></td>
+                    <td className="mono">#{c.number} | {c.code}</td><td><b>{c.title}</b>{c.classified && <span className="classified-pill sm" style={{ marginLeft: 6 }}><Icon n="lock" />Classified</span>}<div className="small muted">{config.divisions.find((x) => x.id === c.division)?.short} · Lead: {c.lead_name}</div></td>
                     <td><Status s={c.status} /></td><td className="muted small">{ago(c.updated_at)}</td>
                   </tr>
                 ))}

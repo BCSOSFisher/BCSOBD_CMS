@@ -61,9 +61,25 @@ function getCase(id) {
   const c = db.prepare('SELECT * FROM cases WHERE id=?').get(Number(id));
   if (!c) return null;
   for (const k of ['bureau_units', 'other_agencies', 'sections']) c[k] = J(c[k], []);
-  for (const k of ['scene', 'coroner', 'closure']) c[k] = J(c[k], {});
+  for (const k of ['scene', 'coroner', 'closure', 'secure']) c[k] = J(c[k], {});
   return c;
 }
+// ---- Classified cases ----
+// Visible to: Bureau command, the case's investigators, and members of the units the lead selected.
+const secureOf = (c) => (typeof c.secure === 'string' ? J(c.secure, {}) : c.secure || {});
+const isClassified = (c) => !!secureOf(c).on;
+function canView(user, c) {
+  if (!c || !isClassified(c)) return true;
+  if (isSup(user)) return true;
+  if (c.created_by === user.id || c.lead_id === user.id) return true;
+  if (db.prepare('SELECT 1 FROM case_members WHERE case_id=? AND user_id=?').get(c.id, user.id)) return true;
+  const mine = J(user.units, []);
+  return (secureOf(c).units || []).some((u) => mine.includes(u));
+}
+const unitNames = (ids) => (ids || []).map((id) => config.divisions.find((d) => d.id === id)?.name || id);
+// What someone without access sees in a list
+const redacted = (c) => ({ id: c.id, number: c.number, code: c.code, division: c.division, title: 'CLASSIFIED', status: 'Classified', restricted: true,
+  classified_units: unitNames(secureOf(c).units), closure: '{}', opened_at: null, updated_at: c.updated_at, location: '' });
 function canEdit(user, c) {
   if (!c) return false;
   if (isSup(user)) return true;
@@ -90,22 +106,24 @@ function caseBundle(c, user) {
     .map((p) => ({ ...p, flags: J(p.flags, []) }));
   const items = db.prepare('SELECT * FROM items WHERE case_id=? ORDER BY id').all(c.id).map((i) => ({ ...i, data: J(i.data, {}) }));
   const files = db.prepare('SELECT * FROM files WHERE case_id=? ORDER BY id').all(c.id);
-  const links = db.prepare(`SELECT l.id, l.reason, c.id AS case_id, c.number, c.code, c.title, c.status, c.division
-      FROM case_links l JOIN cases c ON c.id = CASE WHEN l.a=? THEN l.b ELSE l.a END WHERE l.a=? OR l.b=?`).all(c.id, c.id, c.id);
+  const links = db.prepare(`SELECT l.id, l.reason, c.id AS case_id, c.number, c.code, c.title, c.status, c.division, c.secure, c.lead_id, c.created_by
+      FROM case_links l JOIN cases c ON c.id = CASE WHEN l.a=? THEN l.b ELSE l.a END WHERE l.a=? OR l.b=?`).all(c.id, c.id, c.id)
+    .map((l) => { const lc = { ...l, id: l.case_id }; const ok = canView(user, lc); const { secure, lead_id, created_by, ...rest } = l; return ok ? { ...rest, classified: isClassified(lc) } : { ...rest, title: 'CLASSIFIED', status: 'Classified', reason: '', restricted: true }; });
   // Last meaningful activity (downloads don't count as working the case)
   const lastActivity = db.prepare(`SELECT a.at, a.action, u.display_name FROM audit a LEFT JOIN users u ON u.id=a.user_id
-     WHERE a.case_id=? AND a.action NOT IN ('Report downloaded','Warrant packet downloaded') ORDER BY a.id DESC LIMIT 1`).get(c.id) || null;
+     WHERE a.case_id=? AND a.action NOT IN ('Report downloaded','Warrant packet downloaded','Classified access blocked') ORDER BY a.id DESC LIMIT 1`).get(c.id) || null;
   const auditRows = db.prepare('SELECT a.*, u.display_name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE case_id=? ORDER BY a.id DESC LIMIT 200').all(c.id);
   const users = Object.fromEntries(db.prepare('SELECT * FROM users').all().map((u) => [u.id, userPublic(u)]));
   return {
     case: c, members, persons, items, files, links, audit: auditRows, lastActivity,
     creator: users[c.created_by], lead: users[c.lead_id],
     canEdit: canEdit(user, c), canManage: canManageMembers(user, c), isSupervisor: isSup(user),
+    canClassify: c.lead_id === user.id, classifiedUnits: unitNames(c.secure?.units),
   };
 }
 function caseRow(c) {
   return {
-    ...c,
+    ...c, classified: isClassified(c), secure: undefined,
     lead_name: c.lead_id ? db.prepare('SELECT display_name FROM users WHERE id=?').get(c.lead_id)?.display_name : null,
   };
 }
@@ -152,10 +170,12 @@ app.get('/api/dashboard', requireUser, (req, res) => {
      WHERE (c.lead_id=? OR c.created_by=? OR m.user_id=?) AND c.status!='Closed' ORDER BY c.updated_at DESC`).all(uid, uid, uid).map(caseRow);
   const byStatus = db.prepare('SELECT status, COUNT(*) n FROM cases GROUP BY status').all();
   const byDivision = db.prepare(`SELECT division, COUNT(*) n FROM cases WHERE status!='Closed' GROUP BY division`).all();
-  const review = db.prepare(`SELECT * FROM cases WHERE json_extract(closure,'$.requested')=1 ORDER BY updated_at`).all().map(caseRow);
-  const recent = db.prepare(`SELECT a.*, u.display_name, c.code, c.number, c.title FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id ORDER BY a.id DESC LIMIT 15`).all();
-  const warrants = db.prepare(`SELECT i.id, i.data, c.id case_id, c.code, c.number FROM items i JOIN cases c ON c.id=i.case_id WHERE i.kind='warrant' AND json_extract(i.data,'$.status') IN ('Draft','Submitted to DOJ')`).all()
-    .map((w) => ({ ...w, data: J(w.data, {}) }));
+  const review = db.prepare(`SELECT * FROM cases WHERE json_extract(closure,'$.requested')=1 ORDER BY updated_at`).all().filter((c) => canView(req.user, c)).map(caseRow);
+  const recent = db.prepare(`SELECT a.*, u.display_name, c.code, c.number, c.title, c.secure, c.lead_id, c.created_by FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id ORDER BY a.id DESC LIMIT 15`).all()
+    .map(({ secure, lead_id, created_by, ...a }) => (a.case_id && !canView(req.user, { id: a.case_id, secure, lead_id, created_by }) ? { ...a, title: null, detail: 'Classified case' } : a));
+  const warrants = db.prepare(`SELECT i.id, i.data, c.id case_id, c.code, c.number, c.secure, c.lead_id, c.created_by FROM items i JOIN cases c ON c.id=i.case_id WHERE i.kind='warrant' AND json_extract(i.data,'$.status') IN ('Draft','Submitted to DOJ')`).all()
+    .filter((w) => canView(req.user, { id: w.case_id, secure: w.secure, lead_id: w.lead_id, created_by: w.created_by }))
+    .map(({ secure, lead_id, created_by, ...w }) => ({ ...w, data: J(w.data, {}) }));
   const total = db.prepare('SELECT COUNT(*) n FROM cases').get().n;
   const closed30 = db.prepare(`SELECT COUNT(*) n FROM cases WHERE status='Closed' AND updated_at >= datetime('now','-30 days')`).get().n;
   res.json({ mine, byStatus, byDivision, review, recent, warrants, total, closed30 });
@@ -175,7 +195,8 @@ app.get('/api/cases', requireUser, (req, res) => {
     const like = `%${q}%`; p.push(like, like, q.replace('#', ''), like, like, like);
   }
   sql += ' ORDER BY c.number DESC LIMIT 500';
-  res.json(db.prepare(sql).all(...p).map(caseRow));
+  // Classified cases the user can't access: shown as a locked row, and never matched by a search
+  res.json(db.prepare(sql).all(...p).filter((c) => !q || canView(req.user, c)).map((c) => (canView(req.user, c) ? caseRow(c) : redacted(c))));
 });
 
 function nextCaseNumber() {
@@ -209,6 +230,10 @@ app.post('/api/cases', requireUser, (req, res) => {
 app.get('/api/cases/:id', requireUser, (req, res) => {
   const c = getCase(req.params.id);
   if (!c) return res.status(404).json({ error: 'Case not found' });
+  if (!canView(req.user, c)) {
+    audit(c.id, req.user.id, 'Classified access blocked', '');
+    return res.status(403).json({ error: 'This case is classified.', code: 'classified', number: c.number, case_code: c.code, units: unitNames(c.secure.units) });
+  }
   res.json(caseBundle(c, req.user));
 });
 
@@ -297,7 +322,8 @@ app.get('/api/persons/:id', requireUser, (req, res) => {
   const p = db.prepare('SELECT * FROM persons WHERE id=?').get(Number(req.params.id));
   if (!p) return res.status(404).json({ error: 'Not found' });
   p.flags = J(p.flags, []);
-  const cases = db.prepare(`SELECT cp.role, cp.notes, c.id, c.number, c.code, c.title, c.status, c.division, c.opened_at FROM case_persons cp JOIN cases c ON c.id=cp.case_id WHERE cp.person_id=? ORDER BY c.number DESC`).all(p.id);
+  const cases = db.prepare(`SELECT cp.role, cp.notes, c.id, c.number, c.code, c.title, c.status, c.division, c.opened_at, c.secure, c.lead_id, c.created_by FROM case_persons cp JOIN cases c ON c.id=cp.case_id WHERE cp.person_id=? ORDER BY c.number DESC`).all(p.id)
+    .map(({ secure, lead_id, created_by, ...c }) => (canView(req.user, { ...c, secure, lead_id, created_by }) ? { ...c, classified: isClassified({ secure }) } : { ...c, title: 'CLASSIFIED', notes: '', role: 'Restricted', status: 'Classified', restricted: true }));
   const files = db.prepare('SELECT * FROM files WHERE person_id=? ORDER BY id DESC').all(p.id);
   res.json({ person: p, cases, files });
 });
@@ -466,6 +492,7 @@ app.post('/api/persons/:pid/photo', requireUser, checkQuota, upload.single('file
 app.get('/api/files/:fid', requireUser, (req, res) => {
   const f = db.prepare('SELECT * FROM files WHERE id=?').get(Number(req.params.fid));
   if (!f) return res.status(404).end();
+  if (f.case_id && !canView(req.user, getCase(f.case_id))) return res.status(403).json({ error: 'This file belongs to a classified case.' });
   res.set('Content-Type', f.mime || 'application/octet-stream');
   res.set('Content-Disposition', `${req.query.download ? 'attachment' : 'inline'}; filename="${encodeURIComponent(f.original_name || 'file')}"`);
   res.sendFile(path.join(UPLOAD_DIR, f.stored_name));
@@ -494,6 +521,7 @@ app.post('/api/cases/:id/links', requireUser, (req, res) => {
   const other = db.prepare('SELECT * FROM cases WHERE CAST(number AS TEXT)=? OR code=? COLLATE NOCASE').get(ref, ref);
   if (!other) return res.status(400).json({ error: 'No case found with that number or code.' });
   if (other.id === c.id) return res.status(400).json({ error: 'A case cannot be linked to itself.' });
+  if (!canView(req.user, getCase(other.id))) return res.status(403).json({ error: 'That case is classified — you don’t have access to link it.' });
   db.prepare('INSERT INTO case_links (a,b,reason,created_by,created_at) VALUES (?,?,?,?,?)').run(c.id, other.id, req.body.reason || '', req.user.id, now());
   audit(c.id, req.user.id, 'Case linked', `${other.code} ${req.body.reason ? '— ' + req.body.reason : ''}`);
   audit(other.id, req.user.id, 'Case linked', `${c.code} ${req.body.reason ? '— ' + req.body.reason : ''}`);
@@ -504,6 +532,25 @@ app.delete('/api/links/:lid', requireUser, (req, res) => {
   req.params.id = l.a; const c = loadCaseForEdit(req, res); if (!c) return;
   db.prepare('DELETE FROM case_links WHERE id=?').run(l.id);
   audit(c.id, req.user.id, 'Case unlinked', '');
+  res.json({ ok: true });
+});
+
+// ---------- classification (Lead Investigator only) ----------
+app.post('/api/cases/:id/classify', requireUser, (req, res) => {
+  const c = getCase(req.params.id); if (!c) return res.status(404).end();
+  if (c.lead_id !== req.user.id) return res.status(403).json({ error: 'Only the Lead Investigator can classify this case.' });
+  const units = [...new Set((req.body.units || []).filter((u) => config.divisions.some((d) => d.id === u)))];
+  if (!units.length) return res.status(400).json({ error: 'Choose at least one unit that may access the case.' });
+  const secure = { on: 1, units, by: req.user.display_name, by_id: req.user.id, at: now(), reason: String(req.body.reason || '').slice(0, 300) };
+  db.prepare('UPDATE cases SET secure=?, updated_at=? WHERE id=?').run(JSON.stringify(secure), now(), c.id);
+  audit(c.id, req.user.id, c.secure.on ? 'Classification updated' : 'Case classified', `Restricted to: ${unitNames(units).join(', ')}${secure.reason ? ' — ' + secure.reason : ''}`);
+  res.json({ ok: true });
+});
+app.post('/api/cases/:id/declassify', requireUser, (req, res) => {
+  const c = getCase(req.params.id); if (!c) return res.status(404).end();
+  if (c.lead_id !== req.user.id) return res.status(403).json({ error: 'Only the Lead Investigator can remove the classification.' });
+  db.prepare("UPDATE cases SET secure='{}', updated_at=? WHERE id=?").run(now(), c.id);
+  audit(c.id, req.user.id, 'Case declassified', '');
   res.json({ ok: true });
 });
 
@@ -560,6 +607,7 @@ function sendDocx(res, buf, name) {
 }
 app.get('/api/cases/:id/report.docx', requireUser, async (req, res) => {
   const c = getCase(req.params.id); if (!c) return res.status(404).end();
+  if (!canView(req.user, c)) return res.status(403).json({ error: 'This case is classified.' });
   try {
     const buf = await buildCaseReport(caseBundle(c, req.user), { config, penalCode, user: req.user, uploadDir: UPLOAD_DIR });
     audit(c.id, req.user.id, 'Report downloaded', '');
@@ -570,6 +618,7 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
   const it = db.prepare("SELECT * FROM items WHERE id=? AND kind='warrant'").get(Number(req.params.itemId));
   if (!it) return res.status(404).end();
   const c = getCase(it.case_id);
+  if (!canView(req.user, c)) return res.status(403).json({ error: 'This case is classified.' });
   try {
     const buf = await buildWarrantPacket(caseBundle(c, req.user), { ...it, data: J(it.data, {}) }, { config, penalCode, user: req.user, uploadDir: UPLOAD_DIR });
     audit(c.id, req.user.id, 'Warrant packet downloaded', J(it.data, {}).type || '');

@@ -136,7 +136,7 @@ function pageHeader(config, c, docTitle) {
       ], width: { size: 5580, type: WidthType.DXA }, borders: noBorders, verticalAlign: VerticalAlign.CENTER }),
       new TableCell({ children: [
         para(`Case #${c.number}  |  ${c.code}`, { bold: true, size: 18, color: NAVY, align: AlignmentType.RIGHT, after: 0 }),
-        para('LAW ENFORCEMENT SENSITIVE', { size: 14, color: '9B1C1C', bold: true, align: AlignmentType.RIGHT, after: 0 }),
+        para(c.secure?.on ? 'CLASSIFIED — RESTRICTED ACCESS' : 'LAW ENFORCEMENT SENSITIVE', { size: 14, color: '9B1C1C', bold: true, align: AlignmentType.RIGHT, after: 0 }),
       ], width: { size: 3600, type: WidthType.DXA }, borders: noBorders, verticalAlign: VerticalAlign.CENTER }),
     ] })], [900, 5580, 3600]),
     new Paragraph({ children: [], border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: NAVY, space: 1 } }, spacing: { after: 120 } }),
@@ -317,6 +317,11 @@ async function buildCaseReport(bundle, { config, penalCode, user, uploadDir }) {
   body.push(para(S.division?.short?.toUpperCase() || 'INVESTIGATION', { bold: true, size: 16, color: '666666', after: 60, tight: true }));
   body.push(para(c.title, { bold: true, size: 36, color: NAVY, after: 40, tight: true }));
   body.push(para(`Investigative Case Report  •  Status: ${c.status}`, { size: 18, color: '555555', after: 160 }));
+  if (c.secure?.on) {
+    const units = (c.secure.units || []).map((id) => config.divisions.find((d) => d.id === id)?.name || id).join(', ');
+    body.push(table([new TableRow({ children: [cell([para([run('CLASSIFIED', { bold: true, color: 'FFFFFF', size: 20 }), run(`   Access restricted to: ${units}. Do not distribute outside authorized personnel.`, { color: 'FFFFFF', size: 17 })], { after: 0 })], { w: W, fill: '9B1C1C' })] })], [W]));
+    body.push(blank(80));
+  }
 
   H('Case Information');
   body.push(kv([

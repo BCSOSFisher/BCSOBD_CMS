@@ -10,7 +10,7 @@ async function req(method, url, body, isForm) {
     location.href = data?.code === 'revoked' ? '/denied?reason=revoked' : '/login';
     throw new Error('Signed out');
   }
-  if (!r.ok) throw new Error(data?.error || `Request failed (${r.status})`);
+  if (!r.ok) { const err = new Error(data?.error || `Request failed (${r.status})`); err.data = data; err.status = r.status; throw err; }
   return data;
 }
 export const api = {

@@ -117,6 +117,10 @@ Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the lo
 
 An open case with no activity for more than 14 days shows a warning on its Overview page with the date and person of the last activity. Downloading reports doesn't count as activity.
 
+## Classified cases
+
+The **Lead Investigator** (only) can click **Classify** on a case and choose which units may access it. A classified case can be opened by: members of those units (from their Discord unit roles), investigators assigned to the case, and Bureau command. Everyone else sees it as **CLASSIFIED** in lists with no details; it never appears in their searches, and its files, report and linked-case details are blocked. Blocked attempts are logged. The downloaded report is marked **CLASSIFIED — RESTRICTED ACCESS**. The lead can change the units or remove the classification at any time.
+
 ## Removing personnel
 
 - **Automatic:** when someone who lost their Bureau role (or left the Discord server) tries to sign in, they're refused and moved to **Removed Personnel** on the roster. If their role is given back, they're restored automatically on their next sign-in.
