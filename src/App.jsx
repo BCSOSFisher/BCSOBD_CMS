@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'reac
 import { api } from './api';
 import { Icon, Avatar } from './ui';
 import Login from './pages/Login';
+import Denied from './pages/Denied';
 import Dashboard from './pages/Dashboard';
 import Cases from './pages/Cases';
 import CaseView from './pages/CaseView';
@@ -17,6 +18,7 @@ export const useApp = () => useContext(AppCtx);
 export default function App() {
   const loc = useLocation();
   if (loc.pathname.startsWith('/login')) return <Login />;
+  if (loc.pathname.startsWith('/denied')) return <Denied />;
   return <Authed />;
 }
 

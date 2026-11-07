@@ -5,8 +5,11 @@ async function req(method, url, body, isForm) {
     else { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
   }
   const r = await fetch(url, opt);
-  if (r.status === 401 && !location.pathname.startsWith('/login')) { location.href = '/login'; throw new Error('Signed out'); }
   const data = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
+  if (r.status === 401 && !/^\/(login|denied)/.test(location.pathname)) {
+    location.href = data?.code === 'revoked' ? '/denied?reason=revoked' : '/login';
+    throw new Error('Signed out');
+  }
   if (!r.ok) throw new Error(data?.error || `Request failed (${r.status})`);
   return data;
 }

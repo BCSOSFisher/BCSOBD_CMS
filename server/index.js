@@ -46,7 +46,7 @@ function requireUser(req, res, next) {
   if (!uid) return res.status(401).json({ error: 'Not signed in' });
   const u = db.prepare('SELECT * FROM users WHERE id=?').get(uid);
   if (!u || !RANK_ORDER[u.rank]) return res.status(401).json({ error: 'Not authorised' });
-  if (u.active === 0) { req.session = null; return res.status(401).json({ error: 'Your access has been removed.' }); }
+  if (u.active === 0) { req.session = null; return res.status(401).json({ error: 'Your access has been removed.', code: 'revoked' }); }
   req.user = u;
   next();
 }

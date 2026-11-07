@@ -57,6 +57,17 @@ const manuallyRemoved = (discord_id) => db.prepare("SELECT 1 FROM users WHERE di
 function deny(res, msg) {
   res.redirect('/login?error=' + encodeURIComponent(msg));
 }
+// Access refused (no role / not in server / revoked): full-screen Unauthorized page, and record the attempt
+function unauthorized(res, reason, who) {
+  const ref = 'BCDB-' + Date.now().toString(36).toUpperCase().slice(-6);
+  try {
+    const u = who?.id ? db.prepare('SELECT id FROM users WHERE discord_id=?').get(who.id) : null;
+    const label = { no_role: 'no Detective Bureau role', not_member: 'not in the department Discord server', revoked: 'access revoked by command' }[reason] || reason;
+    db.prepare('INSERT INTO audit (case_id,user_id,action,detail,at) VALUES (NULL,?,?,?,?)')
+      .run(u?.id || null, 'Denied sign-in', `${who?.name ? '@' + who.name + ' — ' : ''}${label} (ref ${ref})`, new Date().toISOString());
+  } catch (e) { console.error(e); }
+  res.redirect(`/denied?reason=${reason}&ref=${ref}`);
+}
 
 function mount(app) {
   app.get('/auth/status', (req, res) => res.json({
@@ -93,12 +104,13 @@ function mount(app) {
       const H = { Authorization: `Bearer ${tok.access_token}` };
       const me = await fetch(`${API}/users/@me`, { headers: H }).then((r) => r.json());
       const memberRes = await fetch(`${API}/users/@me/guilds/${DISCORD_GUILD_ID}/member`, { headers: H });
-      if (memberRes.status === 404) { autoDeactivate(me.id, 'Left the department Discord server'); return deny(res, 'You are not a member of the department Discord server.'); }
+      const who = { id: me.id, name: me.username };
+      if (memberRes.status === 404) { autoDeactivate(me.id, 'Left the department Discord server'); return unauthorized(res, 'not_member', who); }
       if (!memberRes.ok) return deny(res, 'Could not verify your Discord roles. Try again in a moment.');
       const member = await memberRes.json();
       const rank = rankFromRoles(member.roles || []);
-      if (!rank) { autoDeactivate(me.id, 'Detective Bureau role removed in Discord'); return deny(res, 'Access denied — your Discord account does not hold a Detective Bureau role.'); }
-      if (manuallyRemoved(me.id)) return deny(res, 'Your access has been removed by Bureau command. Contact a supervisor if this is a mistake.');
+      if (!rank) { autoDeactivate(me.id, 'Detective Bureau role removed in Discord'); return unauthorized(res, 'no_role', who); }
+      if (manuallyRemoved(me.id)) return unauthorized(res, 'revoked', who);
       const avatar = me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128` : null;
       const uid = upsertUser({
         discord_id: me.id, username: me.username,
@@ -118,7 +130,8 @@ function mount(app) {
     const rank = ['bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1'].includes(req.query.rank) ? req.query.rank : 'det1';
     const name = String(req.query.name || 'Test Detective');
     const units = String(req.query.units || '').split(',').filter(Boolean);
-    if (manuallyRemoved('dev-' + name.toLowerCase().replace(/\W+/g, '-'))) return deny(res, 'Your access has been removed by Bureau command. Contact a supervisor if this is a mistake.');
+    if (req.query.norole) return unauthorized(res, 'no_role', { name });
+    if (manuallyRemoved('dev-' + name.toLowerCase().replace(/\W+/g, '-'))) return unauthorized(res, 'revoked', { id: 'dev-' + name.toLowerCase().replace(/\W+/g, '-'), name });
     req.session.uid = upsertUser({ discord_id: 'dev-' + name.toLowerCase().replace(/\W+/g, '-'), username: name, display_name: name, avatar: null, rank, units });
     res.redirect('/');
   });

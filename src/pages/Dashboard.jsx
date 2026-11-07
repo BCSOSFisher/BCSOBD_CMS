@@ -103,7 +103,7 @@ export default function Dashboard() {
             <div className="panel-b" style={{ display: 'grid', gap: 12 }}>
               {d.recent.length ? d.recent.map((a) => (
                 <div key={a.id} className="small">
-                  <b>{a.display_name}</b> <span className="muted">{a.action.toLowerCase()}</span>{a.code && <> · <Link to={`/cases/${a.case_id}`} className="mono">{a.code}</Link></>}
+                  <b>{a.display_name || (a.action === 'Denied sign-in' ? 'Unknown user' : 'System')}</b> <span className="muted" style={a.action === 'Denied sign-in' ? { color: 'var(--red)' } : undefined}>{a.action.toLowerCase()}</span>{a.code && <> · <Link to={`/cases/${a.case_id}`} className="mono">{a.code}</Link></>}
                   {a.detail && <div className="muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.detail}</div>}
                   <div className="faint" style={{ fontSize: 11.5 }}>{ago(a.at)}</div>
                 </div>
