@@ -1,584 +1,166 @@
 {
   "_about": "Hand-written legal elements for the Bureau's most-used charges. These replace the auto-generated checklists from the penal code. Each element: text = what must be proven; proof = typical evidence that establishes it. Keyed by penal code number.",
+
   "[2] 1.1": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who caused the victim's death.",
-      "proof": "DNA/fingerprints on weapon, CCTV/bodycam, eyewitness ID, confession."
-    },
-    {
-      "key": "death",
-      "text": "The victim is dead.",
-      "proof": "Coroner / Medical Examiner report, death confirmation on scene."
-    },
-    {
-      "key": "causation",
-      "text": "The suspect's act caused the death.",
-      "proof": "ME cause of death matching the weapon or act; ballistics; scene reconstruction."
-    },
-    {
-      "key": "unlawful",
-      "text": "The killing was unlawful — not justified (e.g. self-defense) or excused.",
-      "proof": "Witness statements, scene evidence and the suspect interview ruling out justification."
-    },
-    {
-      "key": "intent",
-      "text": "The suspect killed intentionally.",
-      "proof": "Nature of the attack (number/placement of wounds, weapon used), threats, statements."
-    },
-    {
-      "key": "status",
-      "text": "The victim was a Law Enforcement Officer, active-duty military member or Federal Agent.",
-      "proof": "Agency roster, uniform/badge, marked vehicle, dispatch records."
-    },
-    {
-      "key": "duty",
-      "text": "The victim was performing their lawful official duties at the time, OR was killed because of their official status.",
-      "proof": "Dispatch/CAD logs, bodycam, radio traffic; statements showing motive tied to their role."
-    },
-    {
-      "key": "knowledge",
-      "text": "The suspect knew or reasonably should have known the victim's official status.",
-      "proof": "Uniform, marked vehicle, lights/sirens, verbal identification, prior contact."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — not stacked with First or Second Degree Murder for the same victim and act.",
-      "proof": "Review of charges on this case."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who caused the victim's death.", "proof": "DNA/fingerprints on weapon, CCTV/bodycam, eyewitness ID, confession." },
+    { "key": "death", "text": "The victim is dead.", "proof": "Coroner / Medical Examiner report, death confirmation on scene." },
+    { "key": "causation", "text": "The suspect's act caused the death.", "proof": "ME cause of death matching the weapon or act; ballistics; scene reconstruction." },
+    { "key": "unlawful", "text": "The killing was unlawful — not justified (e.g. self-defense) or excused.", "proof": "Witness statements, scene evidence and the suspect interview ruling out justification." },
+    { "key": "intent", "text": "The suspect killed intentionally.", "proof": "Nature of the attack (number/placement of wounds, weapon used), threats, statements." },
+    { "key": "status", "text": "The victim was a Law Enforcement Officer, active-duty military member or Federal Agent.", "proof": "Agency roster, uniform/badge, marked vehicle, dispatch records." },
+    { "key": "duty", "text": "The victim was performing their lawful official duties at the time, OR was killed because of their official status.", "proof": "Dispatch/CAD logs, bodycam, radio traffic; statements showing motive tied to their role." },
+    { "key": "knowledge", "text": "The suspect knew or reasonably should have known the victim's official status.", "proof": "Uniform, marked vehicle, lights/sirens, verbal identification, prior contact." },
+    { "key": "nostack", "text": "Charging check — not stacked with First or Second Degree Murder for the same victim and act.", "proof": "Review of charges on this case." }
   ],
+
   "[2] 1.2": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who caused the victim's death.",
-      "proof": "DNA/fingerprints on weapon, CCTV, eyewitness ID, phone location data, confession."
-    },
-    {
-      "key": "death",
-      "text": "The victim is dead.",
-      "proof": "Coroner / Medical Examiner report."
-    },
-    {
-      "key": "causation",
-      "text": "The suspect's act caused the death.",
-      "proof": "ME cause of death consistent with the weapon or act; ballistics."
-    },
-    {
-      "key": "unlawful",
-      "text": "The killing was unlawful — not justified or excused.",
-      "proof": "Witnesses, scene evidence, suspect interview ruling out self-defense."
-    },
-    {
-      "key": "intent",
-      "text": "The suspect intended to kill the victim.",
-      "proof": "Weapon and manner of attack, threats, statements, wounds to vital areas."
-    },
-    {
-      "key": "premeditation",
-      "text": "Premeditation — the intent to kill was formed BEFORE the act (any length of time).",
-      "proof": "Prior threats, messages, purchase of weapon, motive (financial, retaliation)."
-    },
-    {
-      "key": "deliberation",
-      "text": "Deliberation — shown by planning, preparation, lying in wait, financial incentive, or other circumstances showing the killing was considered beforehand.",
-      "proof": "Surveillance, travel to the location, bringing a weapon, contract/payment evidence, lying in wait."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — not stacked with Capital or Second Degree Murder for the same victim and act.",
-      "proof": "Review of charges on this case."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who caused the victim's death.", "proof": "DNA/fingerprints on weapon, CCTV, eyewitness ID, phone location data, confession." },
+    { "key": "death", "text": "The victim is dead.", "proof": "Coroner / Medical Examiner report." },
+    { "key": "causation", "text": "The suspect's act caused the death.", "proof": "ME cause of death consistent with the weapon or act; ballistics." },
+    { "key": "unlawful", "text": "The killing was unlawful — not justified or excused.", "proof": "Witnesses, scene evidence, suspect interview ruling out self-defense." },
+    { "key": "intent", "text": "The suspect intended to kill the victim.", "proof": "Weapon and manner of attack, threats, statements, wounds to vital areas." },
+    { "key": "premeditation", "text": "Premeditation — the intent to kill was formed BEFORE the act (any length of time).", "proof": "Prior threats, messages, purchase of weapon, motive (financial, retaliation)." },
+    { "key": "deliberation", "text": "Deliberation — shown by planning, preparation, lying in wait, financial incentive, or other circumstances showing the killing was considered beforehand.", "proof": "Surveillance, travel to the location, bringing a weapon, contract/payment evidence, lying in wait." },
+    { "key": "nostack", "text": "Charging check — not stacked with Capital or Second Degree Murder for the same victim and act.", "proof": "Review of charges on this case." }
   ],
+
   "[2] 1.3": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who caused the victim's death.",
-      "proof": "DNA/fingerprints on weapon, CCTV, eyewitness ID, confession."
-    },
-    {
-      "key": "death",
-      "text": "The victim is dead.",
-      "proof": "Coroner / Medical Examiner report."
-    },
-    {
-      "key": "causation",
-      "text": "The suspect's act caused the death.",
-      "proof": "ME cause of death consistent with the act or weapon."
-    },
-    {
-      "key": "unlawful",
-      "text": "The killing was unlawful — not justified or excused.",
-      "proof": "Witnesses, scene evidence, suspect interview ruling out self-defense."
-    },
-    {
-      "key": "malice",
-      "text": "Malice — EITHER the suspect intended to kill, OR acted with a conscious disregard for human life (knew the act was extremely dangerous and did it anyway).",
-      "proof": "Manner of attack, weapon used, statements; for disregard: shooting into a crowd, sustained beating."
-    },
-    {
-      "key": "nopremed",
-      "text": "No premeditation required — distinguishes from First Degree. Note facts showing a sudden or unplanned killing.",
-      "proof": "Spontaneous confrontation, escalation, no prior planning found."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — not stacked with Capital or First Degree Murder for the same victim and act.",
-      "proof": "Review of charges on this case."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who caused the victim's death.", "proof": "DNA/fingerprints on weapon, CCTV, eyewitness ID, confession." },
+    { "key": "death", "text": "The victim is dead.", "proof": "Coroner / Medical Examiner report." },
+    { "key": "causation", "text": "The suspect's act caused the death.", "proof": "ME cause of death consistent with the act or weapon." },
+    { "key": "unlawful", "text": "The killing was unlawful — not justified or excused.", "proof": "Witnesses, scene evidence, suspect interview ruling out self-defense." },
+    { "key": "malice", "text": "Malice — EITHER the suspect intended to kill, OR acted with a conscious disregard for human life (knew the act was extremely dangerous and did it anyway).", "proof": "Manner of attack, weapon used, statements; for disregard: shooting into a crowd, sustained beating." },
+    { "key": "nopremed", "text": "No premeditation required — distinguishes from First Degree. Note facts showing a sudden or unplanned killing.", "proof": "Spontaneous confrontation, escalation, no prior planning found." },
+    { "key": "nostack", "text": "Charging check — not stacked with Capital or First Degree Murder for the same victim and act.", "proof": "Review of charges on this case." }
   ],
+
   "[2] 1.4": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who made the attempt.",
-      "proof": "Victim/witness ID, CCTV, DNA, shell casings matched to suspect's firearm."
-    },
-    {
-      "key": "intent",
-      "text": "Specific intent — the suspect intended to cause the victim's death.",
-      "proof": "Threats, statements, aiming at vital areas, weapon choice, repeated attacks."
-    },
-    {
-      "key": "step",
-      "text": "Direct and substantial step — the suspect went beyond preparation and acted toward killing the victim (e.g. fired at, stabbed, attempted to strangle).",
-      "proof": "Shots fired, injuries, bodycam/CCTV of the attack, physical evidence."
-    },
-    {
-      "key": "notcompleted",
-      "text": "The killing was not completed (the victim survived).",
-      "proof": "Hospital/EMS records, victim statement."
-    },
-    {
-      "key": "unlawful",
-      "text": "The attempt was unlawful — not justified or excused.",
-      "proof": "Witnesses and scene evidence ruling out self-defense."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — if the victim later dies from this act, charge murder instead (do not stack).",
-      "proof": "Victim's medical status at time of charging."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who made the attempt.", "proof": "Victim/witness ID, CCTV, DNA, shell casings matched to suspect's firearm." },
+    { "key": "intent", "text": "Specific intent — the suspect intended to cause the victim's death.", "proof": "Threats, statements, aiming at vital areas, weapon choice, repeated attacks." },
+    { "key": "step", "text": "Direct and substantial step — the suspect went beyond preparation and acted toward killing the victim (e.g. fired at, stabbed, attempted to strangle).", "proof": "Shots fired, injuries, bodycam/CCTV of the attack, physical evidence." },
+    { "key": "notcompleted", "text": "The killing was not completed (the victim survived).", "proof": "Hospital/EMS records, victim statement." },
+    { "key": "unlawful", "text": "The attempt was unlawful — not justified or excused.", "proof": "Witnesses and scene evidence ruling out self-defense." },
+    { "key": "nostack", "text": "Charging check — if the victim later dies from this act, charge murder instead (do not stack).", "proof": "Victim's medical status at time of charging." }
   ],
+
   "[2] 1.5": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who made the attempt.",
-      "proof": "Officer ID, bodycam/dashcam, ballistics, DNA."
-    },
-    {
-      "key": "intent",
-      "text": "Specific intent — the suspect intended to cause the officer's death.",
-      "proof": "Firing at the officer, aiming at vital areas, statements/threats."
-    },
-    {
-      "key": "step",
-      "text": "Direct and substantial step toward killing the officer (beyond preparation).",
-      "proof": "Shots fired at officer, ramming, stabbing — bodycam, dashcam, damage to vehicle/vest."
-    },
-    {
-      "key": "notcompleted",
-      "text": "The killing was not completed.",
-      "proof": "Officer survived — EMS/hospital records."
-    },
-    {
-      "key": "status",
-      "text": "The victim was a Law Enforcement Officer performing lawful official duties.",
-      "proof": "Dispatch/CAD logs, call assignment, uniform and marked unit."
-    },
-    {
-      "key": "knowledge",
-      "text": "The suspect knew or reasonably should have known the victim was a Law Enforcement Officer.",
-      "proof": "Uniform, marked vehicle, lights/sirens, verbal commands identifying police."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — not stacked with [2] 1.4 Attempted Murder for the same victim and act.",
-      "proof": "Review of charges on this case."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who made the attempt.", "proof": "Officer ID, bodycam/dashcam, ballistics, DNA." },
+    { "key": "intent", "text": "Specific intent — the suspect intended to cause the officer's death.", "proof": "Firing at the officer, aiming at vital areas, statements/threats." },
+    { "key": "step", "text": "Direct and substantial step toward killing the officer (beyond preparation).", "proof": "Shots fired at officer, ramming, stabbing — bodycam, dashcam, damage to vehicle/vest." },
+    { "key": "notcompleted", "text": "The killing was not completed.", "proof": "Officer survived — EMS/hospital records." },
+    { "key": "status", "text": "The victim was a Law Enforcement Officer performing lawful official duties.", "proof": "Dispatch/CAD logs, call assignment, uniform and marked unit." },
+    { "key": "knowledge", "text": "The suspect knew or reasonably should have known the victim was a Law Enforcement Officer.", "proof": "Uniform, marked vehicle, lights/sirens, verbal commands identifying police." },
+    { "key": "nostack", "text": "Charging check — not stacked with [2] 1.4 Attempted Murder for the same victim and act.", "proof": "Review of charges on this case." }
   ],
+
   "[2] 2": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect was the driver of the vehicle.",
-      "proof": "Witness ID, CCTV/dashcam, vehicle registration, DNA/prints on wheel or airbag, admission."
-    },
-    {
-      "key": "operation",
-      "text": "The suspect was operating a motor vehicle.",
-      "proof": "Bodycam/dashcam, witness statements, crash scene."
-    },
-    {
-      "key": "negligence",
-      "text": "The driving was criminally negligent or reckless (a gross departure from careful driving — e.g. extreme speed, DUI, evading, red-light running).",
-      "proof": "Speed estimates, crash reconstruction, toxicology/BAC, pursuit footage, witness statements."
-    },
-    {
-      "key": "death",
-      "text": "Another person died.",
-      "proof": "Coroner / Medical Examiner report."
-    },
-    {
-      "key": "causation",
-      "text": "The suspect's driving caused the death.",
-      "proof": "Crash reconstruction, ME cause of death (vehicle-related trauma)."
-    },
-    {
-      "key": "nointent",
-      "text": "No intent to kill (if intent exists, charge murder instead).",
-      "proof": "Circumstances indicate an unintended death."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — not stacked with Involuntary Manslaughter for the same death. Driver's license to be revoked.",
-      "proof": "Review of charges on this case."
-    }
+    { "key": "identity", "text": "Identity — the suspect was the driver of the vehicle.", "proof": "Witness ID, CCTV/dashcam, vehicle registration, DNA/prints on wheel or airbag, admission." },
+    { "key": "operation", "text": "The suspect was operating a motor vehicle.", "proof": "Bodycam/dashcam, witness statements, crash scene." },
+    { "key": "negligence", "text": "The driving was criminally negligent or reckless (a gross departure from careful driving — e.g. extreme speed, DUI, evading, red-light running).", "proof": "Speed estimates, crash reconstruction, toxicology/BAC, pursuit footage, witness statements." },
+    { "key": "death", "text": "Another person died.", "proof": "Coroner / Medical Examiner report." },
+    { "key": "causation", "text": "The suspect's driving caused the death.", "proof": "Crash reconstruction, ME cause of death (vehicle-related trauma)." },
+    { "key": "nointent", "text": "No intent to kill (if intent exists, charge murder instead).", "proof": "Circumstances indicate an unintended death." },
+    { "key": "nostack", "text": "Charging check — not stacked with Involuntary Manslaughter for the same death. Driver's license to be revoked.", "proof": "Review of charges on this case." }
   ],
+
   "[2] 3": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person whose conduct caused the death.",
-      "proof": "Witnesses, CCTV, physical evidence, admission."
-    },
-    {
-      "key": "conduct",
-      "text": "The suspect acted with criminal negligence or recklessness, OR committed an unlawful act creating a substantial and unjustifiable risk of death.",
-      "proof": "Description of the dangerous act — e.g. unsafe firearm handling, dangerous assault, hazardous condition."
-    },
-    {
-      "key": "death",
-      "text": "Another person died.",
-      "proof": "Coroner / Medical Examiner report."
-    },
-    {
-      "key": "causation",
-      "text": "The suspect's conduct caused the death.",
-      "proof": "ME cause of death linked to the conduct; scene reconstruction."
-    },
-    {
-      "key": "nointent",
-      "text": "No intent to kill (if intent or conscious disregard exists, consider murder).",
-      "proof": "Circumstances indicate an unintended death."
-    },
-    {
-      "key": "nostack",
-      "text": "Charging check — if the death involved operating a motor vehicle, use Vehicular Manslaughter instead (do not stack).",
-      "proof": "Review of charges on this case."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person whose conduct caused the death.", "proof": "Witnesses, CCTV, physical evidence, admission." },
+    { "key": "conduct", "text": "The suspect acted with criminal negligence or recklessness, OR committed an unlawful act creating a substantial and unjustifiable risk of death.", "proof": "Description of the dangerous act — e.g. unsafe firearm handling, dangerous assault, hazardous condition." },
+    { "key": "death", "text": "Another person died.", "proof": "Coroner / Medical Examiner report." },
+    { "key": "causation", "text": "The suspect's conduct caused the death.", "proof": "ME cause of death linked to the conduct; scene reconstruction." },
+    { "key": "nointent", "text": "No intent to kill (if intent or conscious disregard exists, consider murder).", "proof": "Circumstances indicate an unintended death." },
+    { "key": "nostack", "text": "Charging check — if the death involved operating a motor vehicle, use Vehicular Manslaughter instead (do not stack).", "proof": "Review of charges on this case." }
   ],
+
   "[1] 28": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who provided or sold the narcotics.",
-      "proof": "Witnesses, messages arranging the deal, CCTV, CI information, phone records."
-    },
-    {
-      "key": "provision",
-      "text": "The suspect provided OR sold narcotics to the victim.",
-      "proof": "Transaction evidence — messages, cash, witness to hand-off, packaging matching suspect's supply."
-    },
-    {
-      "key": "consumption",
-      "text": "The victim consumed those specific narcotics.",
-      "proof": "Drugs/paraphernalia found with victim, witness statements, toxicology."
-    },
-    {
-      "key": "death",
-      "text": "The victim died.",
-      "proof": "Coroner / Medical Examiner report."
-    },
-    {
-      "key": "mereport",
-      "text": "Required — a Medical Examiner report links the cause of death to the narcotic (overdose, narcotic-induced cardiac arrest, etc.).",
-      "proof": "ME report with cause of death and toxicology attached."
-    },
-    {
-      "key": "link",
-      "text": "The narcotics that caused death are the same ones the suspect supplied.",
-      "proof": "Lab match of substance/cut agent, packaging, timeline from purchase to death."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who provided or sold the narcotics.", "proof": "Witnesses, messages arranging the deal, CCTV, CI information, phone records." },
+    { "key": "provision", "text": "The suspect provided OR sold narcotics to the victim.", "proof": "Transaction evidence — messages, cash, witness to hand-off, packaging matching suspect's supply." },
+    { "key": "consumption", "text": "The victim consumed those specific narcotics.", "proof": "Drugs/paraphernalia found with victim, witness statements, toxicology." },
+    { "key": "death", "text": "The victim died.", "proof": "Coroner / Medical Examiner report." },
+    { "key": "mereport", "text": "Required — a Medical Examiner report links the cause of death to the narcotic (overdose, narcotic-induced cardiac arrest, etc.).", "proof": "ME report with cause of death and toxicology attached." },
+    { "key": "link", "text": "The narcotics that caused death are the same ones the suspect supplied.", "proof": "Lab match of substance/cut agent, packaging, timeline from purchase to death." }
   ],
+
   "[7] 18": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect possessed, transported or distributed the contraband.",
-      "proof": "Traffic stop/arrest, vehicle registration, CCTV, surveillance log, fingerprints on packaging."
-    },
-    {
-      "key": "act",
-      "text": "The suspect transported, distributed or moved the contraband within the state.",
-      "proof": "Vehicle stop, surveillance of movement, shipping/delivery evidence."
-    },
-    {
-      "key": "illegal",
-      "text": "The items were illegal goods, contraband or controlled items (drugs, firearms, ammunition, explosives, alcohol or other regulated materials).",
-      "proof": "Lab test of drugs, firearm/ammo inventory, photos of seized items."
-    },
-    {
-      "key": "knowledge",
-      "text": "The suspect knew the items were present and illegal (knowing possession or control).",
-      "proof": "Items in suspect's vehicle/stash, statements, concealment, efforts to evade."
-    },
-    {
-      "key": "threshold",
-      "text": "Quantity threshold met — ANY ONE of: 25 lb drugs/tobacco · 25 gal alcohol · 25 firearms · 25 magazines · 250 rounds · 5 lb explosives — OR ANY TWO of: 15 lb drugs/tobacco · 15 gal alcohol · 15 firearms · 15 magazines · 100 rounds · 3 lb explosives.",
-      "proof": "Weighed and counted evidence inventory with photos; record exact totals."
-    },
-    {
-      "key": "noborder",
-      "text": "No direct evidence of a border crossing (if there is, charge [11] 5 Smuggling instead). BUREAU POLICY: firearms/weapons trafficking is charged under [11] 5 Smuggling, not this charge. Does not apply to transporting persons.",
-      "proof": "Origin of the shipment / route; type of contraband."
-    }
+    { "key": "identity", "text": "Identity — the suspect possessed, transported or distributed the contraband.", "proof": "Traffic stop/arrest, vehicle registration, CCTV, surveillance log, fingerprints on packaging." },
+    { "key": "act", "text": "The suspect transported, distributed or moved the contraband within the state.", "proof": "Vehicle stop, surveillance of movement, shipping/delivery evidence." },
+    { "key": "illegal", "text": "The items were illegal goods, contraband or controlled items (drugs, firearms, ammunition, explosives, alcohol or other regulated materials).", "proof": "Lab test of drugs, firearm/ammo inventory, photos of seized items." },
+    { "key": "knowledge", "text": "The suspect knew the items were present and illegal (knowing possession or control).", "proof": "Items in suspect's vehicle/stash, statements, concealment, efforts to evade." },
+    { "key": "threshold", "text": "Quantity threshold met — ANY ONE of: 25 lb drugs/tobacco · 25 gal alcohol · 25 firearms · 25 magazines · 250 rounds · 5 lb explosives — OR ANY TWO of: 15 lb drugs/tobacco · 15 gal alcohol · 15 firearms · 15 magazines · 100 rounds · 3 lb explosives.", "proof": "Weighed and counted evidence inventory with photos; record exact totals." },
+    { "key": "noborder", "text": "No direct evidence of a border crossing (if there is, charge [11] 5 Smuggling instead). Does not apply to transporting persons.", "proof": "Origin of the shipment / route." }
   ],
+
   "[7] 7": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect is the person who distributed the substance.",
-      "proof": "Undercover/CI buy, surveillance, CCTV, messages, marked money."
-    },
-    {
-      "key": "distribution",
-      "text": "The suspect sold or distributed a controlled substance.",
-      "proof": "Controlled buy, observed hand-to-hand transactions, messages arranging sales."
-    },
-    {
-      "key": "controlled",
-      "text": "The substance was an illicit controlled substance, OR a prescription substance distributed outside what [7] 6 permits.",
-      "proof": "Lab test result; prescription status."
-    },
-    {
-      "key": "pc",
-      "text": "Required — probable cause that the substance was packaged in bindles / prepared for sale, OR that the sale was attracting a large number of people in a way clearly indicating distribution.",
-      "proof": "Photos of packaging, scales, baggies; surveillance of foot traffic."
-    }
+    { "key": "identity", "text": "Identity — the suspect is the person who distributed the substance.", "proof": "Undercover/CI buy, surveillance, CCTV, messages, marked money." },
+    { "key": "distribution", "text": "The suspect sold or distributed a controlled substance.", "proof": "Controlled buy, observed hand-to-hand transactions, messages arranging sales." },
+    { "key": "controlled", "text": "The substance was an illicit controlled substance, OR a prescription substance distributed outside what [7] 6 permits.", "proof": "Lab test result; prescription status." },
+    { "key": "pc", "text": "Required — probable cause that the substance was packaged in bindles / prepared for sale, OR that the sale was attracting a large number of people in a way clearly indicating distribution.", "proof": "Photos of packaging, scales, baggies; surveillance of foot traffic." }
   ],
+
   "[7] 8": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect possessed the substance.",
-      "proof": "Found on person/vehicle/residence, fingerprints, admission."
-    },
-    {
-      "key": "possession",
-      "text": "The suspect knowingly possessed a controlled substance (in violation of [7] 6).",
-      "proof": "Location of drugs, control of the area, statements."
-    },
-    {
-      "key": "controlled",
-      "text": "The substance is a controlled substance.",
-      "proof": "Lab test result."
-    },
-    {
-      "key": "threshold",
-      "text": "Quantity — 5 ounces or more of a controlled substance.",
-      "proof": "Weighed evidence with photo of scale reading."
-    },
-    {
-      "key": "indicators",
-      "text": "Intent to distribute — supporting indicators (scales, baggies, large sums of cash, burner phones, scent-masking items, large amounts of paraphernalia).",
-      "proof": "Photos and inventory of indicators seized."
-    }
+    { "key": "identity", "text": "Identity — the suspect possessed the substance.", "proof": "Found on person/vehicle/residence, fingerprints, admission." },
+    { "key": "possession", "text": "The suspect knowingly possessed a controlled substance (in violation of [7] 6).", "proof": "Location of drugs, control of the area, statements." },
+    { "key": "controlled", "text": "The substance is a controlled substance.", "proof": "Lab test result." },
+    { "key": "threshold", "text": "Quantity — 5 ounces or more of a controlled substance.", "proof": "Weighed evidence with photo of scale reading." },
+    { "key": "indicators", "text": "Intent to distribute — supporting indicators (scales, baggies, large sums of cash, burner phones, scent-masking items, large amounts of paraphernalia).", "proof": "Photos and inventory of indicators seized." }
   ],
+
   "[11] 30": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect manufactured, transported or sold the product.",
-      "proof": "Presence at lab/facility, surveillance, purchase records for precursors, fingerprints/DNA on equipment."
-    },
-    {
-      "key": "manufacture",
-      "text": "MANUFACTURE — the suspect manufactured an illicit substance, OR manufactured a prescription substance / alcohol / tobacco product without the required permits, licenses and operating requirements.",
-      "proof": "Lab equipment, precursor chemicals, product in production, licensing records check."
-    },
-    {
-      "key": "transport",
-      "text": "OR TRANSPORT — the suspect knowingly transported an illegally produced controlled substance, alcohol or tobacco product (lawful cannabis transport excepted).",
-      "proof": "Vehicle stop, shipping records, surveillance."
-    },
-    {
-      "key": "sale",
-      "text": "OR SALE — the suspect knowingly sold an illegally produced product, or sold without the licenses required by law.",
-      "proof": "Controlled buy, transaction records, messages."
-    },
-    {
-      "key": "knowledge",
-      "text": "Knowledge — the suspect knew the product was illegally produced (for transport/sale) or was knowingly operating the manufacturing.",
-      "proof": "Statements, role in the operation, concealment, cash handling."
-    },
-    {
-      "key": "nolicense",
-      "text": "No valid license/permit covers the activity (including cannabis outside state license or personal limits).",
-      "proof": "Licensing / state records check."
-    },
-    {
-      "key": "federal",
-      "text": "Federal charge — coordinate with federal authorities as required.",
-      "proof": "Notification / referral record."
-    }
+    { "key": "identity", "text": "Identity — the suspect manufactured, transported or sold the product.", "proof": "Presence at lab/facility, surveillance, purchase records for precursors, fingerprints/DNA on equipment." },
+    { "key": "manufacture", "text": "MANUFACTURE — the suspect manufactured an illicit substance, OR manufactured a prescription substance / alcohol / tobacco product without the required permits, licenses and operating requirements.", "proof": "Lab equipment, precursor chemicals, product in production, licensing records check." },
+    { "key": "transport", "text": "OR TRANSPORT — the suspect knowingly transported an illegally produced controlled substance, alcohol or tobacco product (lawful cannabis transport excepted).", "proof": "Vehicle stop, shipping records, surveillance." },
+    { "key": "sale", "text": "OR SALE — the suspect knowingly sold an illegally produced product, or sold without the licenses required by law.", "proof": "Controlled buy, transaction records, messages." },
+    { "key": "knowledge", "text": "Knowledge — the suspect knew the product was illegally produced (for transport/sale) or was knowingly operating the manufacturing.", "proof": "Statements, role in the operation, concealment, cash handling." },
+    { "key": "nolicense", "text": "No valid license/permit covers the activity (including cannabis outside state license or personal limits).", "proof": "Licensing / state records check." },
+    { "key": "federal", "text": "Federal charge — coordinate with federal authorities as required.", "proof": "Notification / referral record." }
   ],
+
   "[2] 5": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect took or held the victim.",
-      "proof": "Victim ID, witnesses, CCTV, vehicle registration, phone location data."
-    },
-    {
-      "key": "taking",
-      "text": "The suspect took, held or abducted the victim.",
-      "proof": "Victim statement, witnesses, bodycam, restraints found."
-    },
-    {
-      "key": "movement",
-      "text": "The suspect moved the victim a substantial distance, and/or held them for an extended period of time.",
-      "proof": "Start and end locations, timeline, GPS/phone data, CCTV along the route."
-    },
-    {
-      "key": "consent",
-      "text": "Without the victim's consent.",
-      "proof": "Victim statement, signs of struggle, restraints, calls for help."
-    },
-    {
-      "key": "forcefear",
-      "text": "By force or fear — physical force was actually used on the victim, OR imminent physical harm was threatened.",
-      "proof": "Injuries/medical report, weapon displayed, threats heard by witnesses or recorded."
-    },
-    {
-      "key": "wobbler",
-      "text": "Classification — felony or federal depending on the nature of the victim (e.g. government officials/federal victims). Record which applies.",
-      "proof": "Victim's status."
-    }
+    { "key": "identity", "text": "Identity — the suspect took or held the victim.", "proof": "Victim ID, witnesses, CCTV, vehicle registration, phone location data." },
+    { "key": "taking", "text": "The suspect took, held or abducted the victim.", "proof": "Victim statement, witnesses, bodycam, restraints found." },
+    { "key": "movement", "text": "The suspect moved the victim a substantial distance, and/or held them for an extended period of time.", "proof": "Start and end locations, timeline, GPS/phone data, CCTV along the route." },
+    { "key": "consent", "text": "Without the victim's consent.", "proof": "Victim statement, signs of struggle, restraints, calls for help." },
+    { "key": "forcefear", "text": "By force or fear — physical force was actually used on the victim, OR imminent physical harm was threatened.", "proof": "Injuries/medical report, weapon displayed, threats heard by witnesses or recorded." },
+    { "key": "wobbler", "text": "Classification — felony or federal depending on the nature of the victim (e.g. government officials/federal victims). Record which applies.", "proof": "Victim's status." }
   ],
+
   "[2] 6": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect held the hostage.",
-      "proof": "Negotiation recordings, bodycam, witness and hostage statements."
-    },
-    {
-      "key": "holding",
-      "text": "The suspect restrained, confined or detained a person without their consent.",
-      "proof": "Hostage statement, footage, restraints."
-    },
-    {
-      "key": "threat",
-      "text": "With a threat against the person's life or well-being.",
-      "proof": "Weapon held to hostage, recorded threats, negotiator logs."
-    },
-    {
-      "key": "leverage",
-      "text": "With intent or declaration to use the person for leverage — escape, protection from arrest (human shield), or personal gain.",
-      "proof": "Demands made, negotiation transcript, use as shield on bodycam."
-    },
-    {
-      "key": "defense",
-      "text": "Defenses ruled out — no consent and there was an imminent threat of arrest or other leverage purpose.",
-      "proof": "Circumstances of the standoff."
-    }
+    { "key": "identity", "text": "Identity — the suspect held the hostage.", "proof": "Negotiation recordings, bodycam, witness and hostage statements." },
+    { "key": "holding", "text": "The suspect restrained, confined or detained a person without their consent.", "proof": "Hostage statement, footage, restraints." },
+    { "key": "threat", "text": "With a threat against the person's life or well-being.", "proof": "Weapon held to hostage, recorded threats, negotiator logs." },
+    { "key": "leverage", "text": "With intent or declaration to use the person for leverage — escape, protection from arrest (human shield), or personal gain.", "proof": "Demands made, negotiation transcript, use as shield on bodycam." },
+    { "key": "defense", "text": "Defenses ruled out — no consent and there was an imminent threat of arrest or other leverage purpose.", "proof": "Circumstances of the standoff." }
   ],
+
   "[2] 4": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect restrained the victim.",
-      "proof": "Victim statement, witnesses, CCTV."
-    },
-    {
-      "key": "restraint",
-      "text": "The suspect intentionally restrained, confined or detained the victim.",
-      "proof": "Restraints, locked room, victim statement."
-    },
-    {
-      "key": "againstwill",
-      "text": "Against the victim's will, in a way that substantially interfered with their freedom of movement.",
-      "proof": "Duration and manner of confinement, attempts to leave."
-    },
-    {
-      "key": "noauthority",
-      "text": "Without lawful authority, legal justification or consent (not lawful arrest, self-defense, shopkeeper's privilege or appropriate parental rights).",
-      "proof": "Circumstances ruling out each defense."
-    }
+    { "key": "identity", "text": "Identity — the suspect restrained the victim.", "proof": "Victim statement, witnesses, CCTV." },
+    { "key": "restraint", "text": "The suspect intentionally restrained, confined or detained the victim.", "proof": "Restraints, locked room, victim statement." },
+    { "key": "againstwill", "text": "Against the victim's will, in a way that substantially interfered with their freedom of movement.", "proof": "Duration and manner of confinement, attempts to leave." },
+    { "key": "noauthority", "text": "Without lawful authority, legal justification or consent (not lawful arrest, self-defense, shopkeeper's privilege or appropriate parental rights).", "proof": "Circumstances ruling out each defense." }
   ],
+
   "[11] 5": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect transported or harbored the items or persons.",
-      "proof": "Vessel/aircraft/vehicle ownership or operation, port/airfield footage, admission."
-    },
-    {
-      "key": "act",
-      "text": "The suspect transported or harbored weapons, firearms, ammunition, explosives, drugs/controlled substances, narcotics, tobacco, alcohol, or currency over $10,000 — OR a person whose entry was being concealed.",
-      "proof": "Seized items inventory, photos, cash count; person found concealed."
-    },
-    {
-      "key": "entry",
-      "text": "Into the State of San Andreas — evidence of a border crossing (by sea, air or land). BUREAU POLICY: firearms/weapons trafficking within the state is also charged under [11] 5; if so, record here that this is an in-state firearms trafficking case and the quantities involved.",
-      "proof": "Border crossing: boat/aircraft tracking, arrival from outside the state, port logs. In-state firearms trafficking: seized firearm/ammo inventory with counts, route/surveillance, transaction evidence."
-    },
-    {
-      "key": "undeclared",
-      "text": "The items were not lawful to possess, or were not declared for inspection before entry.",
-      "proof": "No customs declaration; concealment compartments."
-    },
-    {
-      "key": "knowledge",
-      "text": "The suspect knew the items/persons were being brought in.",
-      "proof": "Concealment efforts, statements, role in the operation, communications."
-    },
-    {
-      "key": "federal",
-      "text": "Federal charge — coordinate with federal authorities as required. For in-state DRUG or other non-firearm trafficking without a border crossing, use [7] 18 Trafficking.",
-      "proof": "Notification / referral record."
-    }
+    { "key": "identity", "text": "Identity — the suspect transported or harbored the items or persons.", "proof": "Vessel/aircraft/vehicle ownership or operation, port/airfield footage, admission." },
+    { "key": "act", "text": "The suspect transported or harbored weapons, firearms, ammunition, explosives, drugs/controlled substances, narcotics, tobacco, alcohol, or currency over $10,000 — OR a person whose entry was being concealed.", "proof": "Seized items inventory, photos, cash count; person found concealed." },
+    { "key": "entry", "text": "Into the State of San Andreas — evidence of a border crossing (by sea, air or land).", "proof": "Boat/aircraft tracking, arrival from outside the state (e.g. Cayo Perico), port logs, witness to landing." },
+    { "key": "undeclared", "text": "The items were not lawful to possess, or were not declared for inspection before entry.", "proof": "No customs declaration; concealment compartments." },
+    { "key": "knowledge", "text": "The suspect knew the items/persons were being brought in.", "proof": "Concealment efforts, statements, role in the operation, communications." },
+    { "key": "federal", "text": "Federal charge — coordinate with federal authorities as required. (Without a border crossing, use [7] 18 Trafficking.)", "proof": "Notification / referral record." }
   ],
+
   "[11] 31": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect manufactured, transported or sold the weapons.",
-      "proof": "Presence at workshop, surveillance, fingerprints/DNA on tools or parts, purchase records."
-    },
-    {
-      "key": "manufacture",
-      "text": "MANUFACTURE — the suspect manufactured, assembled or produced an illegal weapon, OR manufactured firearms/ammunition as a business without a federal license, OR knowingly operated or materially assisted an unlawful manufacturing operation.",
-      "proof": "Workshop with tools, 3D printers, jigs, parts kits, unfinished frames, ammunition press; license check."
-    },
-    {
-      "key": "transport",
-      "text": "OR TRANSPORT — the suspect knowingly transported, shipped or distributed unlawfully made or prohibited firearms, weapons, ammunition, parts, modifications or kits.",
-      "proof": "Vehicle stop, shipments, surveillance."
-    },
-    {
-      "key": "sale",
-      "text": "OR SALE — the suspect knowingly sold or transferred unlawfully made or prohibited weapons, ammunition, parts, modifications or kits.",
-      "proof": "Controlled buy, CI information, transaction messages, cash."
-    },
-    {
-      "key": "knowledge",
-      "text": "Knowledge — the suspect knew the weapons were unlawfully made or prohibited.",
-      "proof": "No serial numbers, conversion devices, statements, concealment."
-    },
-    {
-      "key": "federal",
-      "text": "Federal charge — coordinate with federal authorities. For a one-off individual sale (no manufacturing/commercial operation) use [8] 5 Illegal Sale of Weapon.",
-      "proof": "Scale of the operation."
-    }
+    { "key": "identity", "text": "Identity — the suspect manufactured, transported or sold the weapons.", "proof": "Presence at workshop, surveillance, fingerprints/DNA on tools or parts, purchase records." },
+    { "key": "manufacture", "text": "MANUFACTURE — the suspect manufactured, assembled or produced an illegal weapon, OR manufactured firearms/ammunition as a business without a federal license, OR knowingly operated or materially assisted an unlawful manufacturing operation.", "proof": "Workshop with tools, 3D printers, jigs, parts kits, unfinished frames, ammunition press; license check." },
+    { "key": "transport", "text": "OR TRANSPORT — the suspect knowingly transported, shipped or distributed unlawfully made or prohibited firearms, weapons, ammunition, parts, modifications or kits.", "proof": "Vehicle stop, shipments, surveillance." },
+    { "key": "sale", "text": "OR SALE — the suspect knowingly sold or transferred unlawfully made or prohibited weapons, ammunition, parts, modifications or kits.", "proof": "Controlled buy, CI information, transaction messages, cash." },
+    { "key": "knowledge", "text": "Knowledge — the suspect knew the weapons were unlawfully made or prohibited.", "proof": "No serial numbers, conversion devices, statements, concealment." },
+    { "key": "federal", "text": "Federal charge — coordinate with federal authorities. For a one-off individual sale (no manufacturing/commercial operation) use [8] 5 Illegal Sale of Weapon.", "proof": "Scale of the operation." }
   ],
+
   "[8] 5": [
-    {
-      "key": "identity",
-      "text": "Identity — the suspect sold, traded, transferred or delivered the weapon.",
-      "proof": "Controlled buy, CI information, messages, CCTV, marked money."
-    },
-    {
-      "key": "transfer",
-      "text": "The suspect sold, traded, transferred, delivered or distributed a firearm, weapon or ammunition.",
-      "proof": "Transaction evidence — hand-off observed, payment records, messages."
-    },
-    {
-      "key": "unlawful",
-      "text": "The transfer was unlawful because AT LEAST ONE applies: (a) the weapon is an illegal class under [8] 7; (b) the buyer lacked the required license; (c) the buyer was legally prohibited (suspect knew); (d) the suspect was dealing without a dealer license; or (e) the deal was arranged to avoid licensing/transfer rules.",
-      "proof": "Weapon classification, buyer's license and criminal history check, dealer license check."
-    },
-    {
-      "key": "knowledge",
-      "text": "Knowledge — where required (prohibited buyer, avoiding requirements), the suspect knew the transfer was unlawful.",
-      "proof": "Messages, statements, cash-only/no-paperwork deal, removed serial numbers."
-    }
+    { "key": "identity", "text": "Identity — the suspect sold, traded, transferred or delivered the weapon.", "proof": "Controlled buy, CI information, messages, CCTV, marked money." },
+    { "key": "transfer", "text": "The suspect sold, traded, transferred, delivered or distributed a firearm, weapon or ammunition.", "proof": "Transaction evidence — hand-off observed, payment records, messages." },
+    { "key": "unlawful", "text": "The transfer was unlawful because AT LEAST ONE applies: (a) the weapon is an illegal class under [8] 7; (b) the buyer lacked the required license; (c) the buyer was legally prohibited (suspect knew); (d) the suspect was dealing without a dealer license; or (e) the deal was arranged to avoid licensing/transfer rules.", "proof": "Weapon classification, buyer's license and criminal history check, dealer license check." },
+    { "key": "knowledge", "text": "Knowledge — where required (prohibited buyer, avoiding requirements), the suspect knew the transfer was unlawful.", "proof": "Messages, statements, cash-only/no-paperwork deal, removed serial numbers." }
   ]
 }
