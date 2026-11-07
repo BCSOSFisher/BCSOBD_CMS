@@ -97,6 +97,11 @@ CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT);
 // lightweight migrations
 const cols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
 if (!cols.includes('units')) db.exec("ALTER TABLE users ADD COLUMN units TEXT DEFAULT '[]'");
+// Roster status: active=0 hides a person from the roster/assignment lists and blocks sign-in.
+// deactivated_type: 'auto' (lost Discord role — restored automatically if the role comes back) or 'manual' (removed by command).
+for (const [c, def] of [['active', 'INTEGER DEFAULT 1'], ['deactivated_at', 'TEXT'], ['deactivated_by', 'TEXT'], ['deactivated_type', 'TEXT'], ['deactivated_reason', 'TEXT']]) {
+  if (!cols.includes(c)) db.exec(`ALTER TABLE users ADD COLUMN ${c} ${def}`);
+}
 
 const J = (s, d) => { try { return s == null ? d : JSON.parse(s); } catch { return d; } };
 

@@ -101,7 +101,7 @@ export function NewCaseModal({ onClose }) {
           </Field>
           <Field label="Assisting Investigators">
             <div className="row" style={{ maxHeight: 110, overflow: 'auto' }}>
-              {users.filter((u) => u.id !== me.id).map((u) => <label key={u.id} className="check"><input type="checkbox" checked={v.assistants.includes(u.id)} onChange={() => toggle('assistants', u.id)} />{u.display_name}</label>)}
+              {users.filter((u) => u.active && u.id !== me.id).map((u) => <label key={u.id} className="check"><input type="checkbox" checked={v.assistants.includes(u.id)} onChange={() => toggle('assistants', u.id)} />{u.display_name}</label>)}
               {users.length <= 1 && <span className="faint small">Other detectives appear here after their first login.</span>}
             </div>
           </Field>

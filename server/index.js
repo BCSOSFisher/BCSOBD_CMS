@@ -46,6 +46,7 @@ function requireUser(req, res, next) {
   if (!uid) return res.status(401).json({ error: 'Not signed in' });
   const u = db.prepare('SELECT * FROM users WHERE id=?').get(uid);
   if (!u || !RANK_ORDER[u.rank]) return res.status(401).json({ error: 'Not authorised' });
+  if (u.active === 0) { req.session = null; return res.status(401).json({ error: 'Your access has been removed.' }); }
   req.user = u;
   next();
 }
@@ -78,7 +79,7 @@ function loadCaseForEdit(req, res) {
   return c;
 }
 function touch(caseId) { db.prepare('UPDATE cases SET updated_at=? WHERE id=?').run(now(), caseId); }
-const userPublic = (u) => u && ({ id: u.id, display_name: u.display_name, username: u.username, avatar: u.avatar, rank: u.rank, callsign: u.callsign, units: J(u.units, []) });
+const userPublic = (u) => u && ({ id: u.id, display_name: u.display_name, username: u.username, avatar: u.avatar, rank: u.rank, callsign: u.callsign, units: J(u.units, []), active: u.active !== 0 });
 
 function caseBundle(c, user) {
   const members = db.prepare(`SELECT m.role, u.* FROM case_members m JOIN users u ON u.id=m.user_id WHERE m.case_id=?`).all(c.id)
@@ -113,7 +114,28 @@ app.get('/api/config', requireUser, (req, res) => res.json(config));
 let pcEtag = crypto.createHash('md5').update(JSON.stringify(penalCode)).digest('hex');
 app.get('/api/penal-code', requireUser, (req, res) => { res.set('ETag', pcEtag); res.json(penalCode); });
 app.get('/api/users', requireUser, (req, res) => {
-  res.json(db.prepare('SELECT * FROM users ORDER BY display_name').all().map((u) => ({ ...userPublic(u), last_login: u.last_login })));
+  res.json(db.prepare('SELECT * FROM users ORDER BY display_name').all().map((u) => ({ ...userPublic(u), last_login: u.last_login,
+    ...(u.active === 0 ? { deactivated_at: u.deactivated_at, deactivated_by: u.deactivated_by, deactivated_type: u.deactivated_type, deactivated_reason: u.deactivated_reason } : {}) })));
+});
+// Command can remove someone from the roster (blocks sign-in immediately) and restore them
+app.post('/api/users/:id/deactivate', requireUser, (req, res) => {
+  if (!isSup(req.user)) return res.status(403).json({ error: 'Only Bureau command can remove personnel.' });
+  const u = db.prepare('SELECT * FROM users WHERE id=?').get(Number(req.params.id));
+  if (!u) return res.status(404).json({ error: 'Not found' });
+  if (u.id === req.user.id) return res.status(400).json({ error: 'You cannot remove yourself.' });
+  if (RANK_ORDER[u.rank] > RANK_ORDER[req.user.rank]) return res.status(403).json({ error: 'You cannot remove someone who outranks you.' });
+  const reason = String(req.body.reason || '').trim().slice(0, 200) || 'Removed by command';
+  db.prepare("UPDATE users SET active=0, deactivated_at=?, deactivated_by=?, deactivated_type='manual', deactivated_reason=? WHERE id=?").run(now(), req.user.display_name, reason, u.id);
+  audit(null, req.user.id, 'Removed from roster', `${u.display_name} — ${reason}`);
+  res.json({ ok: true });
+});
+app.post('/api/users/:id/reactivate', requireUser, (req, res) => {
+  if (!isSup(req.user)) return res.status(403).json({ error: 'Only Bureau command can restore personnel.' });
+  const u = db.prepare('SELECT * FROM users WHERE id=?').get(Number(req.params.id));
+  if (!u) return res.status(404).json({ error: 'Not found' });
+  db.prepare('UPDATE users SET active=1, deactivated_at=NULL, deactivated_by=NULL, deactivated_type=NULL, deactivated_reason=NULL WHERE id=?').run(u.id);
+  audit(null, req.user.id, 'Restored to roster', u.display_name);
+  res.json({ ok: true });
 });
 app.patch('/api/users/:id', requireUser, (req, res) => {
   if (!isSup(req.user) && req.user.id !== Number(req.params.id)) return res.status(403).json({ error: 'Forbidden' });
@@ -236,6 +258,7 @@ app.post('/api/cases/:id/members', requireUser, (req, res) => {
   if (!canManageMembers(req.user, c)) return res.status(403).json({ error: 'Only the case lead/creator or a supervisor can add investigators.' });
   const u = db.prepare('SELECT * FROM users WHERE id=?').get(Number(req.body.user_id));
   if (!u) return res.status(400).json({ error: 'Unknown user' });
+  if (u.active === 0) return res.status(400).json({ error: `${u.display_name} has been removed from the roster.` });
   db.prepare('INSERT OR REPLACE INTO case_members (case_id,user_id,role) VALUES (?,?,?)').run(c.id, u.id, req.body.role || 'Assistant');
   audit(c.id, req.user.id, 'Investigator added', `${u.display_name} (${req.body.role || 'Assistant'})`);
   touch(c.id); res.json({ ok: true });

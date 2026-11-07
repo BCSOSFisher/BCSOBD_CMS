@@ -35,12 +35,24 @@ function upsertUser({ discord_id, username, display_name, avatar, rank, units = 
   const at = new Date().toISOString();
   const ex = db.prepare('SELECT id FROM users WHERE discord_id=?').get(discord_id);
   if (ex) {
-    db.prepare('UPDATE users SET username=?, display_name=?, avatar=?, rank=?, units=?, last_login=? WHERE id=?').run(username, display_name, avatar, rank, JSON.stringify(units), at, ex.id);
+    // Holding a Bureau role again restores someone who was auto-removed (manual removals stay until command restores them)
+    db.prepare(`UPDATE users SET username=?, display_name=?, avatar=?, rank=?, units=?, last_login=?,
+      active=1, deactivated_at=NULL, deactivated_by=NULL, deactivated_type=NULL, deactivated_reason=NULL WHERE id=?`).run(username, display_name, avatar, rank, JSON.stringify(units), at, ex.id);
     return ex.id;
   }
   return Number(db.prepare('INSERT INTO users (discord_id,username,display_name,avatar,rank,units,last_login) VALUES (?,?,?,?,?,?,?)')
     .run(discord_id, username, display_name, avatar, rank, JSON.stringify(units), at).lastInsertRowid);
 }
+
+// Former member tried to sign in without a Bureau role: mark them inactive on the roster
+function autoDeactivate(discord_id, reason) {
+  const u = db.prepare('SELECT id, active FROM users WHERE discord_id=?').get(discord_id);
+  if (!u || u.active === 0) return;
+  db.prepare("UPDATE users SET active=0, deactivated_at=?, deactivated_by='System (Discord role check)', deactivated_type='auto', deactivated_reason=? WHERE id=?")
+    .run(new Date().toISOString(), reason, u.id);
+  db.prepare('INSERT INTO audit (case_id,user_id,action,detail,at) VALUES (NULL,?,?,?,?)').run(u.id, 'Removed from roster', reason, new Date().toISOString());
+}
+const manuallyRemoved = (discord_id) => db.prepare("SELECT 1 FROM users WHERE discord_id=? AND active=0 AND deactivated_type='manual'").get(discord_id);
 
 function deny(res, msg) {
   res.redirect('/login?error=' + encodeURIComponent(msg));
@@ -81,11 +93,12 @@ function mount(app) {
       const H = { Authorization: `Bearer ${tok.access_token}` };
       const me = await fetch(`${API}/users/@me`, { headers: H }).then((r) => r.json());
       const memberRes = await fetch(`${API}/users/@me/guilds/${DISCORD_GUILD_ID}/member`, { headers: H });
-      if (memberRes.status === 404) return deny(res, 'You are not a member of the department Discord server.');
+      if (memberRes.status === 404) { autoDeactivate(me.id, 'Left the department Discord server'); return deny(res, 'You are not a member of the department Discord server.'); }
       if (!memberRes.ok) return deny(res, 'Could not verify your Discord roles. Try again in a moment.');
       const member = await memberRes.json();
       const rank = rankFromRoles(member.roles || []);
-      if (!rank) return deny(res, 'Access denied — your Discord account does not hold a Detective Bureau role.');
+      if (!rank) { autoDeactivate(me.id, 'Detective Bureau role removed in Discord'); return deny(res, 'Access denied — your Discord account does not hold a Detective Bureau role.'); }
+      if (manuallyRemoved(me.id)) return deny(res, 'Your access has been removed by Bureau command. Contact a supervisor if this is a mistake.');
       const avatar = me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128` : null;
       const uid = upsertUser({
         discord_id: me.id, username: me.username,
@@ -105,6 +118,7 @@ function mount(app) {
     const rank = ['bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1'].includes(req.query.rank) ? req.query.rank : 'det1';
     const name = String(req.query.name || 'Test Detective');
     const units = String(req.query.units || '').split(',').filter(Boolean);
+    if (manuallyRemoved('dev-' + name.toLowerCase().replace(/\W+/g, '-'))) return deny(res, 'Your access has been removed by Bureau command. Contact a supervisor if this is a mistake.');
     req.session.uid = upsertUser({ discord_id: 'dev-' + name.toLowerCase().replace(/\W+/g, '-'), username: name, display_name: name, avatar: null, rank, units });
     res.redirect('/');
   });

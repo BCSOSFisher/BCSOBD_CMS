@@ -116,6 +116,12 @@ Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the lo
 
 An open case with no activity for more than 14 days shows a warning on its Overview page with the date and person of the last activity. Downloading reports doesn't count as activity.
 
+## Removing personnel
+
+- **Automatic:** when someone who lost their Bureau role (or left the Discord server) tries to sign in, they're refused and moved to **Removed Personnel** on the roster. If their role is given back, they're restored automatically on their next sign-in.
+- **Manual:** Bureau Lead, Co-Lead and Supervisors can click **Remove** on the roster. The person is signed out immediately and stays blocked even if they still hold a Discord role, until command clicks **Restore**. Command can't remove themselves or someone who outranks them.
+- Removed people stay on their past cases, notes and signatures for the record, but can't be added to new cases.
+
 ## Updating the penal code
 
 The penal code is stored in `shared/penal-code.json`. When docs.sadrp.net changes:

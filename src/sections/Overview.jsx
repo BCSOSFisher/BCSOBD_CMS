@@ -73,7 +73,7 @@ export function Overview({ b, reload }) {
             {b.members.map((m) => (
               <tr key={m.id}>
                 <td style={{ width: 40 }}><Avatar u={m} sm /></td>
-                <td><b>{m.display_name}</b><div className="small muted">{config.ranks[m.rank]}{m.callsign ? ` · ${m.callsign}` : ''}</div></td>
+                <td><b>{m.display_name}</b>{!m.active && <span className="pill red" style={{ marginLeft: 8 }}>Removed from roster</span>}<div className="small muted">{config.ranks[m.rank]}{m.callsign ? ` · ${m.callsign}` : ''}</div></td>
                 <td>{m.id === c.lead_id ? <span className="pill navy">Lead Investigator</span> : <span className="pill gray">{m.role}</span>}</td>
                 <td style={{ textAlign: 'right' }}>
                   {b.canManage && m.id !== c.lead_id && <>
@@ -89,7 +89,7 @@ export function Overview({ b, reload }) {
           <div className="row" style={{ marginTop: 12 }}>
             <select style={{ maxWidth: 320 }} value={addUser} onChange={(e) => setAddUser(e.target.value)}>
               <option value="">Add an investigator…</option>
-              {users.filter((u) => !b.members.some((m) => m.id === u.id)).map((u) => <option key={u.id} value={u.id}>{u.display_name} — {config.ranks[u.rank]}</option>)}
+              {users.filter((u) => u.active && !b.members.some((m) => m.id === u.id)).map((u) => <option key={u.id} value={u.id}>{u.display_name} — {config.ranks[u.rank]}</option>)}
             </select>
             <button className="btn primary" disabled={!addUser} onClick={async () => {
               try { await api.post(`/api/cases/${c.id}/members`, { user_id: addUser }); setAddUser(''); await reload(); toast('Investigator added'); } catch (e) { toast(e.message, true); }
