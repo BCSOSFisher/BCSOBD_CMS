@@ -77,7 +77,7 @@ export function Overview({ b, reload }) {
                 <td>{m.id === c.lead_id ? <span className="pill navy">Lead Investigator</span> : <span className="pill gray">{m.role}</span>}</td>
                 <td style={{ textAlign: 'right' }}>
                   {b.canManage && m.id !== c.lead_id && <>
-                    <button className="btn ghost sm" onClick={() => save({ lead_id: m.id })}>Make lead</button>
+                    {m.rank !== 'trainee' && <button className="btn ghost sm" onClick={() => save({ lead_id: m.id })}>Make lead</button>}
                     <button className="icon-btn" onClick={() => setRm(m)}><Icon n="x" /></button>
                   </>}
                 </td>

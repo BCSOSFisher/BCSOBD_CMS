@@ -6,7 +6,7 @@ const { db } = require('./db');
 
 const {
   DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, DISCORD_GUILD_ID,
-  ROLE_BUREAU_LEAD = '', ROLE_CO_LEAD = '', ROLE_SUPERVISOR = '', ROLE_LEAD = '', ROLE_DET2 = '', ROLE_DET1 = '',
+  ROLE_BUREAU_LEAD = '', ROLE_CO_LEAD = '', ROLE_SUPERVISOR = '', ROLE_LEAD = '', ROLE_DET2 = '', ROLE_DET1 = '', ROLE_TRAINEE = '',
 } = process.env;
 const DEV = process.env.DEV_LOGIN === 'true';
 const API = 'https://discord.com/api/v10';
@@ -25,6 +25,7 @@ const RANK_ROLES = [
   ['lead', ids(ROLE_LEAD)],
   ['det2', ids(ROLE_DET2)],
   ['det1', ids(ROLE_DET1)],
+  ['trainee', ids(ROLE_TRAINEE)],
 ];
 function rankFromRoles(roles) {
   for (const [rank, list] of RANK_ROLES) if (list.some((r) => roles.includes(r))) return rank;
@@ -127,7 +128,7 @@ function mount(app) {
   // Local testing only. NEVER enable DEV_LOGIN on the live server.
   app.get('/auth/dev', (req, res) => {
     if (!DEV) return res.status(404).end();
-    const rank = ['bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1'].includes(req.query.rank) ? req.query.rank : 'det1';
+    const rank = ['bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1', 'trainee'].includes(req.query.rank) ? req.query.rank : 'det1';
     const name = String(req.query.name || 'Test Detective');
     const units = String(req.query.units || '').split(',').filter(Boolean);
     if (req.query.norole) return unauthorized(res, 'no_role', { name });

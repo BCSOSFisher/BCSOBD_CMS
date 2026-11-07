@@ -26,7 +26,8 @@ export default function Closure({ b, reload }) {
     { ok: !b.items.some((i) => i.kind === 'warrant' && ['Draft', 'Submitted to DOJ'].includes(i.data.status)), t: 'No warrants left in Draft / Submitted', soft: true },
   ];
   const leadName = cl.detective_sig?.name || b.lead?.display_name || me.display_name;
-  const canSubmit = b.canEdit && !cl.requested && c.status !== 'Closed';
+  const canSubmit = b.canEdit && !cl.requested && c.status !== 'Closed' && me.rank !== 'trainee';
+  const traineeBlocked = b.canEdit && !cl.requested && c.status !== 'Closed' && me.rank === 'trainee';
 
   return (
     <div className="grid">
@@ -41,7 +42,7 @@ export default function Closure({ b, reload }) {
       </SectionPanel>
 
       <SectionPanel title="Detective Declaration & Signature" sub="Lead investigator submits the case for supervisor review">
-        {canSubmit ? (
+        {traineeBlocked ? <p style={{ margin: 0 }} className="muted">Trainees can’t sign a case for closure. The lead investigator signs and submits it once the investigation is complete.</p> : canSubmit ? (
           <div className="form">
             <div className="grid g2">
               <Field label="Case Disposition"><select value={v.disposition} onChange={(e) => setV({ ...v, disposition: e.target.value })}><option value="">Select…</option>{DISPOSITIONS.map((d) => <option key={d}>{d}</option>)}</select></Field>

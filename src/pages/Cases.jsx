@@ -5,7 +5,7 @@ import { useApp } from '../App';
 import { Icon, Status, Empty, Modal, Field, useForm, useToast, fmtDate, today, nowTime, localTZ, ago } from '../ui';
 
 export default function Cases() {
-  const { config } = useApp();
+  const { config, me } = useApp();
   const [sp, setSp] = useSearchParams();
   const [rows, setRows] = useState(null);
   const [newCase, setNewCase] = useState(false);
@@ -20,7 +20,7 @@ export default function Cases() {
     <>
       <div className="page-head">
         <div><h1>{mine ? 'My Assignments' : 'Case Files'}</h1><p>{mine ? 'Cases you lead, created, or are assigned to.' : 'All Detective Bureau investigations. Any detective may view; only assigned investigators may edit.'}</p></div>
-        <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>
+        {me.rank !== 'trainee' && <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>}
       </div>
       <div className="panel">
         <div className="panel-h" style={{ flexWrap: 'wrap' }}>

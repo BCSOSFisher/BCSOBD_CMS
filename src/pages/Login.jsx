@@ -24,7 +24,7 @@ export default function Login() {
             <div style={{ display: 'flex', gap: 8 }}>
               <input value={dev.name} onChange={(e) => setDev({ ...dev, name: e.target.value })} />
               <select value={dev.rank} onChange={(e) => setDev({ ...dev, rank: e.target.value })} style={{ width: 140 }}>
-                <option value="bureau_lead">Bureau Lead</option><option value="co_lead">Bureau Co-Lead</option><option value="supervisor">Supervisor</option><option value="lead">Detective III</option><option value="det2">Detective II</option><option value="det1">Detective I</option>
+                <option value="bureau_lead">Bureau Lead</option><option value="co_lead">Bureau Co-Lead</option><option value="supervisor">Supervisor</option><option value="lead">Detective III</option><option value="det2">Detective II</option><option value="det1">Detective I</option><option value="trainee">Trainee</option>
               </select>
               <a className="btn" href={`/auth/dev?name=${encodeURIComponent(dev.name)}&rank=${dev.rank}`}>Go</a>
             </div>

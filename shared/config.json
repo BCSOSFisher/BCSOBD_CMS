@@ -74,7 +74,8 @@
     "supervisor": "Bureau Supervisor",
     "lead": "Detective III",
     "det2": "Detective II",
-    "det1": "Detective I"
+    "det1": "Detective I",
+    "trainee": "Detective Trainee"
   },
   "personRoles": [
     "Suspect",
@@ -214,11 +215,15 @@
     "supervisor",
     "lead",
     "det2",
-    "det1"
+    "det1",
+    "trainee"
   ],
   "commandRanks": [
     "bureau_lead",
     "co_lead",
     "supervisor"
+  ],
+  "traineeRanks": [
+    "trainee"
   ]
 }

@@ -40,7 +40,9 @@ auth.mount(app);
 
 // ---------- helpers ----------
 const now = () => new Date().toISOString();
-const RANK_ORDER = { bureau_lead: 6, co_lead: 5, supervisor: 4, lead: 3, det2: 2, det1: 1 };
+const RANK_ORDER = { bureau_lead: 7, co_lead: 6, supervisor: 5, lead: 4, det2: 3, det1: 2, trainee: 1 };
+// Trainees work cases they're assigned to, but can't open cases, lead them, or sign them off for closure
+const isTrainee = (u) => u.rank === 'trainee';
 function requireUser(req, res, next) {
   const uid = req.session && req.session.uid;
   if (!uid) return res.status(401).json({ error: 'Not signed in' });
@@ -182,6 +184,7 @@ function nextCaseNumber() {
   return Math.max((max || 0) + 1, start);
 }
 app.post('/api/cases', requireUser, (req, res) => {
+  if (isTrainee(req.user)) return res.status(403).json({ error: 'Trainees can’t open cases. Ask a detective to open the case and add you to it.' });
   const b = req.body || {};
   const div = config.divisions.find((d) => d.id === b.division);
   if (!div) return res.status(400).json({ error: 'Choose a division' });
@@ -225,6 +228,7 @@ app.patch('/api/cases/:id', requireUser, (req, res) => {
     if (k === 'lead_id') {
       if (!canManageMembers(req.user, c)) return res.status(403).json({ error: 'Only the lead or a supervisor can reassign the lead.' });
       v = Number(v);
+      if (db.prepare('SELECT rank FROM users WHERE id=?').get(v)?.rank === 'trainee') return res.status(400).json({ error: 'A trainee can’t be the Lead Investigator.' });
       db.prepare('INSERT OR IGNORE INTO case_members (case_id,user_id,role) VALUES (?,?,?)').run(c.id, v, 'Lead Investigator');
       db.prepare("UPDATE case_members SET role='Lead Investigator' WHERE case_id=? AND user_id=?").run(c.id, v);
       if (c.lead_id && c.lead_id !== v) db.prepare("UPDATE case_members SET role='Assistant' WHERE case_id=? AND user_id=?").run(c.id, c.lead_id);
@@ -506,6 +510,7 @@ app.delete('/api/links/:lid', requireUser, (req, res) => {
 // ---------- closure workflow ----------
 app.post('/api/cases/:id/closure/submit', requireUser, (req, res) => {
   const c = loadCaseForEdit(req, res); if (!c) return;
+  if (isTrainee(req.user)) return res.status(403).json({ error: 'Trainees can’t sign a case for closure. The lead investigator must sign.' });
   if (!req.body.agree) return res.status(400).json({ error: 'You must affirm the declaration to sign.' });
   const closure = { ...c.closure, requested: 1, requested_at: now(), disposition: req.body.disposition || '', closing_summary: req.body.closing_summary || '',
     detective_sig: { user_id: req.user.id, name: req.user.display_name, rank: req.user.rank, signed_at: now() }, rejected: null };

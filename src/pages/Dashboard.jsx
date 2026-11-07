@@ -26,7 +26,7 @@ export default function Dashboard() {
           <h1>Good {hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'}, {me.display_name}</h1>
           <p>{config.ranks[me.rank]} · Bureau overview for {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         </div>
-        <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>
+        {me.rank !== 'trainee' && <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>}
       </div>
 
       <div className="grid g4" style={{ marginBottom: 16 }}>
