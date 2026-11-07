@@ -4,7 +4,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
 
 ## Features
 
-- **Discord sign-in.** Access and rank come from your Discord server roles: Bureau Lead, Bureau Co-Lead, Bureau Supervisor, Detective III, Detective II, Detective I or Detective Trainee. Bureau Lead, Co-Lead and Supervisor all have command permissions (sign-off, reopen, delete, edit any case). Anyone without a Bureau role is refused.
+- **Discord sign-in.** Access and rank come from your Discord server roles: Bureau Lead, Bureau Co-Lead, Bureau Supervisor, Detective III, Detective II, Detective I or Application Accepted - Pending Training. Bureau Lead, Co-Lead and Supervisor all have command permissions (sign-off, reopen, delete, edit any case). Anyone without a Bureau role is refused.
 - **Case files** are numbered `Case #53 | HOM-2026-0053`, with the prefix set by division (HOM, VCU, GNU, VICE, SOD).
 - **Permissions.** Every detective can view every case. Only the case creator, the people they add, and supervisors can edit.
 - **Statuses:** Open, Pending Warrant, Suspended, Referred to DA, Cleared Arrest Warrant, Apprehended - Awaiting Questioning, Apprehended - Pending Case Closure, Closed.
@@ -62,7 +62,7 @@ Investigation dashboard for the **Blaine County Detective Bureau**. Open and man
      - Detective III → `ROLE_LEAD`
      - Detective II → `ROLE_DET2`
      - Detective I → `ROLE_DET1`
-     - Detective Trainee → `ROLE_TRAINEE` (can work cases they're added to, but can't open cases, be lead, or sign for closure)
+     - Application Accepted - Pending Training → `ROLE_TRAINEE` (can work cases they're added to, but can't open cases, be lead, or sign for closure)
    - If several roles should map to one rank, separate their IDs with commas.
    - Optional unit roles: `UNIT_ROLE_HOM`, `UNIT_ROLE_GNU`, `UNIT_ROLE_VICE` (and `UNIT_ROLE_VCU`, `UNIT_ROLE_SOD` if you add those roles). Units appear on the roster and pre-select the division when a detective opens a new case.
 
