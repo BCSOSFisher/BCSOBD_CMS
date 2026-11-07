@@ -271,6 +271,11 @@ table.t tr.click:hover td { background: #f7f9fc; }
   .case-head .actions { position: static; margin-top: 14px; flex-wrap: wrap; }
 }
 
+.inactive-notice { display: flex; gap: 12px; align-items: flex-start; background: var(--amber-soft); border: 1px solid #f1cf8f; color: #7a4506; border-radius: var(--radius); padding: 13px 16px; line-height: 1.5; }
+.inactive-notice b { display: block; font-size: 14.5px; color: inherit; margin-bottom: 1px; }
+.inactive-notice .ico { width: 34px; height: 34px; border-radius: 50%; background: rgba(161, 92, 7, .12); display: grid; place-items: center; flex: none; }
+.inactive-notice .ico svg { width: 18px; height: 18px; }
+
 /* ================= Mobile & tablet ================= */
 .menu-btn, .top-badge, .nav-scrim { display: none; }
 @media (max-width: 900px) {

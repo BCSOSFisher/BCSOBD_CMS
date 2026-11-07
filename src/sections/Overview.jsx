@@ -21,6 +21,7 @@ export function Overview({ b, reload }) {
 
   return (
     <div className="grid">
+      <InactivityNotice b={b} />
       <SectionPanel title="Case Information" actions={b.canEdit && !editing && <button className="btn sm" onClick={startEdit}><Icon n="edit" />Edit</button>}>
         {editing ? (
           <div className="form">
@@ -153,3 +154,26 @@ export const Coroner = (p) => <CaseJsonForm {...p} field="coroner" title="Corone
   { k: 'tox', label: 'Toxicology Report', type: 'textarea', rows: 2 },
   { k: 'notes', label: 'Additional Notes', type: 'textarea', rows: 3 },
 ]} />;
+
+// Warns when an open case has had no activity for more than 14 days
+export const INACTIVE_DAYS = 14;
+function InactivityNotice({ b }) {
+  const c = b.case;
+  const last = b.lastActivity?.at || c.updated_at;
+  if (c.status === 'Closed' || !last) return null;
+  const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+  if (days <= INACTIVE_DAYS) return null;
+  const suspended = c.status === 'Suspended';
+  return (
+    <div className="inactive-notice" role="alert" style={suspended ? { background: '#f1f3f6', borderColor: 'var(--line-strong)', color: 'var(--muted)' } : undefined}>
+      <div className="ico"><Icon n="clock" /></div>
+      <div>
+        <b>{suspended ? 'Suspended case — ' : ''}No activity for {days} days</b>
+        <div>
+          Last activity {fmtDate(last)}{b.lastActivity?.display_name ? ` by ${b.lastActivity.display_name}` : ''}{b.lastActivity?.action ? ` (${b.lastActivity.action.toLowerCase()})` : ''}.
+          {' '}{suspended ? 'Review whether this case should be reopened or closed.' : 'Add a note, update the case, or change its status (e.g. Suspended) to keep the file current.'}
+        </div>
+      </div>
+    </div>
+  );
+}

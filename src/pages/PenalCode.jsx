@@ -31,7 +31,7 @@ export default function PenalCode() {
           <div style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }} className="charge-pick">
             {list.map((c) => (
               <div key={c.code + c.name} className={'opt' + (sel === c ? ' sel' : '')} onClick={() => { setSel(c); if (window.innerWidth <= 900) setTimeout(() => document.getElementById('pc-detail')?.scrollIntoView({ behavior: 'smooth' }), 50); }}>
-                <div className="row" style={{ gap: 8 }}><span className="mono small" style={{ minWidth: 62 }}>{c.code}</span><b style={{ flex: 1 }}>{c.name}</b><span className={`pill ${CLASS_COLOR(c.classification)}`}>{c.classification}</span></div>
+                <div className="row" style={{ gap: 8 }}><span className="mono small" style={{ minWidth: 62 }}>{c.code}</span><b style={{ flex: 1 }}>{c.name}</b>{c.curated && <span className="pill green" title="Hand-written elements">✓</span>}<span className={`pill ${CLASS_COLOR(c.classification)}`}>{c.classification}</span></div>
               </div>
             ))}
           </div>
@@ -49,8 +49,8 @@ export default function PenalCode() {
               <div style={{ lineHeight: 1.6 }}>{sel.definition}</div>
               {sel.details?.length > 0 && <div className="small" style={{ marginTop: 12, lineHeight: 1.55, color: '#344054' }}>{sel.details.map((d, i) => <p key={i} style={{ margin: '0 0 6px' }}>{d}</p>)}</div>}
               <hr className="sep" />
-              <div className="tag" style={{ marginBottom: 8 }}>Elements to prove</div>
-              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.55 }}>{sel.elements.map((e) => <li key={e.key} style={{ marginBottom: 4 }}>{e.text}</li>)}</ol>
+              <div className="tag" style={{ marginBottom: 8 }}>Elements to prove{sel.curated ? ' · hand-written' : ' · auto-generated from statute'}</div>
+              <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.55 }}>{sel.elements.map((e) => <li key={e.key} style={{ marginBottom: 6 }}>{e.text}{e.proof && <div className="small faint"><i>Typical proof:</i> {e.proof}</div>}</li>)}</ol>
               {sel.examples?.length > 0 && <><hr className="sep" /><div className="tag" style={{ marginBottom: 8 }}>Examples</div>
                 <ul className="small" style={{ margin: 0, paddingLeft: 20, lineHeight: 1.55 }}>{sel.examples.map((e, i) => <li key={i}>{e}</li>)}</ul></>}
               <div style={{ marginTop: 14 }}><a href={sel.url} target="_blank" rel="noreferrer" className="small">Open on docs.sadrp.net <Icon n="external" width="12" /></a></div>

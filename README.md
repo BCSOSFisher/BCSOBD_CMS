@@ -108,6 +108,14 @@ DEV_LOGIN=true node server/index.js
 
 Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the login page so you can try every rank without Discord. **Never set `DEV_LOGIN` on the live site.** The server refuses to start if it's enabled while `NODE_ENV=production`.
 
+## Hand-written charge elements
+
+`shared/charge-elements.json` holds hand-written elements (with "typical proof" hints) for the Bureau's priority charges: homicide, drug trafficking/sale/manufacturing, kidnapping/hostage/unlawful imprisonment, and firearms smuggling/manufacturing/sale. They replace the auto-generated checklists and survive penal code updates. Charges marked **✓ Elements** in the picker use them. Cases that already had one of these charges show a **Use updated elements** button.
+
+## Inactive case warning
+
+An open case with no activity for more than 14 days shows a warning on its Overview page with the date and person of the last activity. Downloading reports doesn't count as activity.
+
 ## Updating the penal code
 
 The penal code is stored in `shared/penal-code.json`. When docs.sadrp.net changes:

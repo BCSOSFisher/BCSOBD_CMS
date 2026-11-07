@@ -11,18 +11,20 @@ export default function Charges({ b, reload, setSec }) {
   const [rm, setRm] = useState(null);
   const I = useItems(b, reload);
   const charges = b.items.filter((i) => i.kind === 'charge');
+  const [pc, setPc] = useState(null);
+  useEffect(() => { loadPenalCode().then(setPc); }, []);
   return (
     <SectionPanel title="Charges & Legal Elements" sub="Prove every element — link each one to the evidence that establishes it"
       actions={b.canEdit && <button className="btn primary sm" onClick={() => setAdding(true)}><Icon n="plus" />Add Charge</button>}>
       {!charges.length && <Empty icon="scale" title="No charges yet">Add charges from the San Andreas Penal Code. Each charge comes with its required elements so you can document how each one is proven.</Empty>}
-      {charges.map((ch, i) => <ChargeCard key={ch.id} idx={i + 1} ch={ch} b={b} I={I} onRemove={() => setRm(ch)} setSec={setSec} />)}
+      {charges.map((ch, i) => <ChargeCard key={ch.id} idx={i + 1} ch={ch} b={b} I={I} onRemove={() => setRm(ch)} setSec={setSec} pcEntry={pc?.find((x) => x.code === ch.data.code)} />)}
       {adding && <AddChargeModal b={b} onClose={() => setAdding(false)} onAdd={(data) => I.add('charge', data)} />}
       {rm && <Confirm text={`Remove ${rm.data.code} — ${rm.data.name} from this case?`} yes="Remove" onYes={() => I.remove(rm.id)} onClose={() => setRm(null)} />}
     </SectionPanel>
   );
 }
 
-function ChargeCard({ ch, idx, b, I, onRemove, setSec }) {
+function ChargeCard({ ch, idx, b, I, onRemove, setSec, pcEntry }) {
   const d = ch.data;
   const els = d.elements || [];
   const met = els.filter((e) => e.met).length;
@@ -35,6 +37,8 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec }) {
   const save = (patch) => I.update(ch.id, patch, true);
   const setEl = (k, patch) => save({ elements: els.map((e, j) => (j === k ? { ...e, ...patch } : e)) });
   const pct = els.length ? Math.round((met / els.length) * 100) : 0;
+  const [upd, setUpd] = useState(false);
+  const outdated = pcEntry?.curated && !d.curated;
   return (
     <div className="card" style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px', background: '#f8f9fb', borderBottom: open ? '1px solid var(--line)' : 0 }}>
@@ -71,6 +75,14 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec }) {
       </div>
       {open && (
         <div style={{ padding: '12px 16px 16px' }}>
+          {outdated && (
+            <div className="readonly-banner" style={{ background: 'var(--blue-soft)', color: 'var(--blue)', borderColor: '#c7d7f5', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+              <span><Icon n="scale" width="15" style={{ verticalAlign: -3, marginRight: 6 }} />Updated, hand-written elements are available for this charge.</span>
+              {b.canEdit && <button className="btn sm" onClick={() => setUpd(true)}>Use updated elements</button>}
+            </div>
+          )}
+          {upd && <Confirm danger={false} yes="Replace elements" text="Replace this charge's elements with the updated checklist? Ticks, linked evidence and notes on the current elements will be cleared, so you'll re-link evidence to the new elements."
+            onYes={() => save({ curated: true, elements: pcEntry.elements.map((e) => ({ ...e, met: false, evidence: [], notes: '' })) })} onClose={() => setUpd(false)} />}
           <button className="btn ghost sm" style={{ paddingLeft: 0 }} onClick={() => setShowDef(!showDef)}><Icon n="book" />{showDef ? 'Hide' : 'Show'} statutory definition</button>
           {showDef && <div className="small" style={{ background: '#f8f9fb', border: '1px solid var(--line)', borderRadius: 6, padding: 12, margin: '6px 0', lineHeight: 1.55 }}>{d.definition}
             {d.url && <div style={{ marginTop: 6 }}><a href={d.url} target="_blank" rel="noreferrer">View on SADRP docs <Icon n="external" width="12" /></a></div>}</div>}
@@ -80,6 +92,7 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec }) {
                 <div className="tick" title={b.canEdit ? 'Mark established' : ''} onClick={() => b.canEdit && setEl(k, { met: !e.met })}>{e.met && <Icon n="check" />}</div>
                 <div>
                   <div className="txt"><b className="small muted" style={{ marginRight: 6 }}>Element {k + 1}.</b>{e.text}</div>
+                  {e.proof && <div className="small faint" style={{ marginTop: 3 }}><i>Typical proof:</i> {e.proof}</div>}
                   <div className="sub">
                     {(e.evidence || []).map((id) => {
                       const ev = evidence.find((x) => x.id === id);
@@ -137,7 +150,7 @@ function AddChargeModal({ b, onClose, onAdd }) {
   const add = async () => {
     try {
       await onAdd({
-        code: sel.code, name: sel.name, classification: sel.classification, definition: sel.definition, url: sel.url,
+        code: sel.code, name: sel.name, classification: sel.classification, definition: sel.definition, url: sel.url, curated: !!sel.curated,
         suspect_person_id: Number(suspect) || null, counts, status: 'Under Investigation',
         elements: sel.elements.map((e) => ({ ...e, met: false, evidence: [], notes: '' })),
       });
@@ -155,7 +168,7 @@ function AddChargeModal({ b, onClose, onAdd }) {
           {!pc && <div className="opt muted">Loading penal code…</div>}
           {list.slice(0, 200).map((c) => (
             <div key={c.code + c.name} className={'opt' + (sel === c ? ' sel' : '')} onClick={() => setSel(c)}>
-              <div className="row" style={{ gap: 6 }}><span className="mono small">{c.code}</span><b style={{ flex: 1 }}>{c.name}</b><span className={`pill ${CLASS_COLOR(c.classification)}`}>{c.classification}</span></div>
+              <div className="row" style={{ gap: 6 }}><span className="mono small">{c.code}</span><b style={{ flex: 1 }}>{c.name}</b>{c.curated && <span className="pill green" title="Hand-written elements">✓ Elements</span>}<span className={`pill ${CLASS_COLOR(c.classification)}`}>{c.classification}</span></div>
               <div className="small faint">{c.category}</div>
             </div>
           ))}
@@ -169,7 +182,7 @@ function AddChargeModal({ b, onClose, onAdd }) {
                 <div className="row small" style={{ marginTop: 8 }}>{sel.sentence && <span className="pill gray">Sentence: {sel.sentence}</span>}{sel.fine && <span className="pill gray">Fine: {sel.fine}</span>}</div>
               </div>
               <div><div className="tag" style={{ marginBottom: 6 }}>Elements to prove</div>
-                <ol className="small" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>{sel.elements.map((e) => <li key={e.key}>{e.text}</li>)}</ol>
+                <ol className="small" style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>{sel.elements.map((e) => <li key={e.key} style={{ marginBottom: 4 }}>{e.text}{e.proof && <div className="faint"><i>Typical proof:</i> {e.proof}</div>}</li>)}</ol>
                 <div className="small faint" style={{ marginTop: 6 }}>You can edit, add or remove elements after adding the charge.</div>
               </div>
               <div className="grid g2">

@@ -16,6 +16,11 @@ const { db, J, UPLOAD_DIR } = require('./db');
 const auth = require('./auth');
 const config = require('../shared/config.json');
 const penalCode = require('../shared/penal-code.json');
+// Hand-written elements for priority charges replace the auto-generated ones
+const curatedElements = require('../shared/charge-elements.json');
+for (const c of penalCode) {
+  if (curatedElements[c.code]) { c.elements = curatedElements[c.code]; c.curated = true; }
+}
 const { buildCaseReport, buildWarrantPacket } = require('./report');
 
 const PORT = process.env.PORT || 3000;
@@ -84,10 +89,13 @@ function caseBundle(c, user) {
   const files = db.prepare('SELECT * FROM files WHERE case_id=? ORDER BY id').all(c.id);
   const links = db.prepare(`SELECT l.id, l.reason, c.id AS case_id, c.number, c.code, c.title, c.status, c.division
       FROM case_links l JOIN cases c ON c.id = CASE WHEN l.a=? THEN l.b ELSE l.a END WHERE l.a=? OR l.b=?`).all(c.id, c.id, c.id);
+  // Last meaningful activity (downloads don't count as working the case)
+  const lastActivity = db.prepare(`SELECT a.at, a.action, u.display_name FROM audit a LEFT JOIN users u ON u.id=a.user_id
+     WHERE a.case_id=? AND a.action NOT IN ('Report downloaded','Warrant packet downloaded') ORDER BY a.id DESC LIMIT 1`).get(c.id) || null;
   const auditRows = db.prepare('SELECT a.*, u.display_name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE case_id=? ORDER BY a.id DESC LIMIT 200').all(c.id);
   const users = Object.fromEntries(db.prepare('SELECT * FROM users').all().map((u) => [u.id, userPublic(u)]));
   return {
-    case: c, members, persons, items, files, links, audit: auditRows,
+    case: c, members, persons, items, files, links, audit: auditRows, lastActivity,
     creator: users[c.created_by], lead: users[c.lead_id],
     canEdit: canEdit(user, c), canManage: canManageMembers(user, c), isSupervisor: isSup(user),
   };
