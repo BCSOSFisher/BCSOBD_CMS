@@ -110,7 +110,7 @@ Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the lo
 
 ## Hand-written charge elements
 
-`shared/charge-elements.json` holds hand-written elements (with "typical proof" hints) for the Bureau's priority charges: homicide, drug trafficking/sale/manufacturing, kidnapping/hostage/unlawful imprisonment, and firearms smuggling/manufacturing/sale. They replace the auto-generated checklists and survive penal code updates. Charges marked **✓ Elements** in the picker use them. Cases that already had one of these charges show a **Use updated elements** button.
+`shared/charge-elements.json` holds hand-written elements (with "typical proof" hints) for the Bureau's priority charges: homicide, drug trafficking/sale/manufacturing, kidnapping/hostage/unlawful imprisonment, and firearms smuggling/manufacturing/sale. Bureau policy: firearms trafficking (including within the state) is charged under [11] 5 Smuggling; drug trafficking within the state uses [7] 18. They replace the auto-generated checklists and survive penal code updates. Charges marked **✓ Elements** in the picker use them. Cases that already had one of these charges show a **Use updated elements** button.
 
 ## Inactive case warning
 
