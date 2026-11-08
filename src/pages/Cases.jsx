@@ -20,7 +20,7 @@ export default function Cases() {
     <>
       <div className="page-head">
         <div><h1>{mine ? 'My Assignments' : 'Case Files'}</h1><p>{mine ? 'Cases you lead, created, or are assigned to.' : 'All Detective Bureau investigations. Any detective may view; only assigned investigators may edit.'}</p></div>
-        {me.rank !== 'trainee' && <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>}
+        {!['trainee', 'viewer'].includes(me.rank) && <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>}
       </div>
       <div className="panel">
         <div className="panel-h" style={{ flexWrap: 'wrap' }}>
@@ -101,7 +101,7 @@ export function NewCaseModal({ onClose }) {
           </Field>
           <Field label="Assisting Investigators">
             <div className="row" style={{ maxHeight: 110, overflow: 'auto' }}>
-              {users.filter((u) => u.active && u.id !== me.id).map((u) => <label key={u.id} className="check"><input type="checkbox" checked={v.assistants.includes(u.id)} onChange={() => toggle('assistants', u.id)} />{u.display_name}</label>)}
+              {users.filter((u) => u.active && u.rank !== 'viewer' && u.id !== me.id).map((u) => <label key={u.id} className="check"><input type="checkbox" checked={v.assistants.includes(u.id)} onChange={() => toggle('assistants', u.id)} />{u.display_name}</label>)}
               {users.length <= 1 && <span className="faint small">Other detectives appear here after their first login.</span>}
             </div>
           </Field>

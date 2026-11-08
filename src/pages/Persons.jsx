@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import { useApp } from '../App';
 import { Icon, Empty, Modal, useToast, fmtDate } from '../ui';
 import { Fields } from '../sections/common';
 import { PERSON_FIELDS } from '../sections/Persons';
 
 export default function Persons() {
+  const { me } = useApp();
   const [q, setQ] = useState('');
   const [rows, setRows] = useState(null);
   const [add, setAdd] = useState(null);
@@ -16,7 +18,7 @@ export default function Persons() {
     <>
       <div className="page-head">
         <div><h1>Persons Directory</h1><p>Every suspect, victim, witness and person of interest across all Bureau cases.</p></div>
-        <button className="btn primary" onClick={() => setAdd({})}><Icon n="plus" />New Profile</button>
+        {me.rank !== 'viewer' && <button className="btn primary" onClick={() => setAdd({})}><Icon n="plus" />New Profile</button>}
       </div>
       <div className="panel">
         <div className="panel-h"><input style={{ maxWidth: 360 }} placeholder="Search name, SSN or phone…" value={q} onChange={(e) => setQ(e.target.value)} /><span className="muted small">{rows ? `${rows.length} record(s)` : ''}</span></div>

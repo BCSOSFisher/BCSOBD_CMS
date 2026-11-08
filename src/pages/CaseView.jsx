@@ -17,7 +17,7 @@ import { GENERIC } from '../sections/generic-config';
 
 export default function CaseView() {
   const { id } = useParams();
-  const { config } = useApp();
+  const { config, me } = useApp();
   const [sp, setSp] = useSearchParams();
   const [b, setB] = useState(null);
   const [err, setErr] = useState(null);
@@ -119,7 +119,7 @@ export default function CaseView() {
         <div className="readonly-banner"><Icon n="lock" width="15" />
           {c.status === 'Closed' ? 'This case is closed and locked. A supervisor can reopen it from Review & Closure.'
             : c.closure?.requested ? 'This case has been submitted for supervisor review and is locked until it is approved or returned.'
-              : 'View only — you are not assigned to this case. Ask the lead investigator to add you.'}
+              : me.rank === 'viewer' ? 'View only — your Detective Bureau access is read-only.' : 'View only — you are not assigned to this case. Ask the lead investigator to add you.'}
         </div>
       )}
       {c.closure?.rejected && !c.closure?.requested && c.status !== 'Closed' && (

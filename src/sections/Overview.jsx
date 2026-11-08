@@ -89,7 +89,7 @@ export function Overview({ b, reload }) {
           <div className="row" style={{ marginTop: 12 }}>
             <select style={{ maxWidth: 320 }} value={addUser} onChange={(e) => setAddUser(e.target.value)}>
               <option value="">Add an investigator…</option>
-              {users.filter((u) => u.active && !b.members.some((m) => m.id === u.id)).map((u) => <option key={u.id} value={u.id}>{u.display_name} — {config.ranks[u.rank]}</option>)}
+              {users.filter((u) => u.active && u.rank !== 'viewer' && !b.members.some((m) => m.id === u.id)).map((u) => <option key={u.id} value={u.id}>{u.display_name} — {config.ranks[u.rank]}</option>)}
             </select>
             <button className="btn primary" disabled={!addUser} onClick={async () => {
               try { await api.post(`/api/cases/${c.id}/members`, { user_id: addUser }); setAddUser(''); await reload(); toast('Investigator added'); } catch (e) { toast(e.message, true); }

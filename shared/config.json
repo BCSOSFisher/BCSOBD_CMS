@@ -69,13 +69,15 @@
     "US Marshals"
   ],
   "ranks": {
+    "admin": "Department Administration",
     "bureau_lead": "Bureau Lead",
     "co_lead": "Bureau Co-Lead",
     "supervisor": "Bureau Supervisor",
     "lead": "Detective III",
     "det2": "Detective II",
     "det1": "Detective I",
-    "trainee": "Application Accepted - Pending Training"
+    "trainee": "Application Accepted - Pending Training",
+    "viewer": "Detective Bureau (View Only)"
   },
   "personRoles": [
     "Suspect",
@@ -210,20 +212,26 @@
     }
   ],
   "rankOrder": [
+    "admin",
     "bureau_lead",
     "co_lead",
     "supervisor",
     "lead",
     "det2",
     "det1",
-    "trainee"
+    "trainee",
+    "viewer"
   ],
   "commandRanks": [
+    "admin",
     "bureau_lead",
     "co_lead",
     "supervisor"
   ],
   "traineeRanks": [
     "trainee"
+  ],
+  "viewOnlyRanks": [
+    "viewer"
   ]
 }

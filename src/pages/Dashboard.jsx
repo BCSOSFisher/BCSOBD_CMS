@@ -48,12 +48,12 @@ export default function Dashboard() {
       </div>
       <div className="row dash-tools">
         <span className="live" title="The dashboard refreshes automatically every minute"><i />Live · {secAgo < 20 ? 'just updated' : `updated ${ago(new Date(d.loadedAt).toISOString())}`}</span>
-        {!d.isTrainee && (
+        {!d.isTrainee && !d.isViewer && (
           <select value={unit} onChange={(e) => setUnitSaved(e.target.value)} style={{ width: 'auto' }} aria-label="Filter by unit">
             <option value="">All units</option>{config.divisions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
           </select>
         )}
-        {!d.isTrainee && <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>}
+        {!d.isTrainee && !d.isViewer && <button className="btn gold" onClick={() => setNewCase(true)}><Icon n="plus" />Open New Case</button>}
       </div>
     </div>
   );
@@ -97,6 +97,37 @@ export default function Dashboard() {
       ) : <Empty title={d.isTrainee ? 'Not assigned to any cases yet' : 'No active assignments'}>{d.isTrainee ? 'A detective will add you to a case when you’re assigned.' : 'Open a new case or ask a lead to add you to one.'}</Empty>}
     </div>
   );
+
+  // ---------- View-only dashboard (base Detective Bureau role, no rank) ----------
+  if (d.isViewer) {
+    return (
+      <>
+        {head}
+        <div className="panel panel-b" style={{ marginBottom: 16, background: '#f4f6f9' }}>
+          <div className="row" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+            <Icon n="eye" width="22" height="22" style={{ color: 'var(--muted)', flex: 'none', marginTop: 2 }} />
+            <div>
+              <b>View-only access.</b> You hold the Detective Bureau role without a rank, so you can read case files (except classified cases), the persons directory and the penal code.
+              <div className="small muted" style={{ marginTop: 6 }}>You can’t open, edit or be assigned to cases. Contact Bureau command if you need more access.</div>
+            </div>
+          </div>
+        </div>
+        <div className="panel">
+          <div className="panel-h"><h3>Recently Active Cases</h3><Link to="/cases" className="small">All case files →</Link></div>
+          {d.recentCases.length ? (
+            <table className="t"><thead><tr><th>Case</th><th>Title</th><th>Status</th><th>Last activity</th></tr></thead><tbody>
+              {d.recentCases.map((c) => (
+                <tr key={c.id} className="click" onClick={() => nav(`/cases/${c.id}`)}>
+                  <td className="mono">#{c.number} | {c.code}</td><td><b>{c.title}</b><div className="small muted">{config.divisions.find((x) => x.id === c.division)?.short} · Lead: {c.lead_name}</div></td>
+                  <td><Status s={c.status} /></td><td className="small muted">{ago(c.last_at)}</td>
+                </tr>
+              ))}
+            </tbody></table>
+          ) : <Empty title="No open cases" />}
+        </div>
+      </>
+    );
+  }
 
   // ---------- Trainee dashboard ----------
   if (d.isTrainee) {

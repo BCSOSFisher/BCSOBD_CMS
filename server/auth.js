@@ -6,7 +6,7 @@ const { db } = require('./db');
 
 const {
   DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, DISCORD_GUILD_ID,
-  ROLE_BUREAU_LEAD = '', ROLE_CO_LEAD = '', ROLE_SUPERVISOR = '', ROLE_LEAD = '', ROLE_DET2 = '', ROLE_DET1 = '', ROLE_TRAINEE = '',
+  ROLE_ADMIN = '', ROLE_BASE = '', ROLE_BUREAU_LEAD = '', ROLE_CO_LEAD = '', ROLE_SUPERVISOR = '', ROLE_LEAD = '', ROLE_DET2 = '', ROLE_DET1 = '', ROLE_TRAINEE = '',
 } = process.env;
 const DEV = process.env.DEV_LOGIN === 'true';
 const API = 'https://discord.com/api/v10';
@@ -19,6 +19,8 @@ const UNIT_ROLES = Object.entries(process.env).filter(([k]) => k.startsWith('UNI
 const unitsFromRoles = (roles) => UNIT_ROLES.filter(([, list]) => list.some((r) => roles.includes(r))).map(([u]) => u);
 // Highest role wins.
 const RANK_ROLES = [
+  // Department Administration (Sheriff, Undersheriff, ...): list several role IDs separated by commas
+  ['admin', ids(ROLE_ADMIN)],
   ['bureau_lead', ids(ROLE_BUREAU_LEAD)],
   ['co_lead', ids(ROLE_CO_LEAD)],
   ['supervisor', ids(ROLE_SUPERVISOR)],
@@ -26,6 +28,8 @@ const RANK_ROLES = [
   ['det2', ids(ROLE_DET2)],
   ['det1', ids(ROLE_DET1)],
   ['trainee', ids(ROLE_TRAINEE)],
+  // Base Detective Bureau role with no rank role: read-only access
+  ['viewer', ids(ROLE_BASE)],
 ];
 function rankFromRoles(roles) {
   for (const [rank, list] of RANK_ROLES) if (list.some((r) => roles.includes(r))) return rank;
@@ -128,7 +132,7 @@ function mount(app) {
   // Local testing only. NEVER enable DEV_LOGIN on the live server.
   app.get('/auth/dev', (req, res) => {
     if (!DEV) return res.status(404).end();
-    const rank = ['bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1', 'trainee'].includes(req.query.rank) ? req.query.rank : 'det1';
+    const rank = ['admin', 'bureau_lead', 'co_lead', 'supervisor', 'lead', 'det2', 'det1', 'trainee', 'viewer'].includes(req.query.rank) ? req.query.rank : 'det1';
     const name = String(req.query.name || 'Test Detective');
     const units = String(req.query.units || '').split(',').filter(Boolean);
     if (req.query.norole) return unauthorized(res, 'no_role', { name });

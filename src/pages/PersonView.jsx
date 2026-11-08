@@ -8,7 +8,8 @@ import { PERSON_FIELDS } from '../sections/Persons';
 
 export default function PersonView() {
   const { id } = useParams();
-  const { config } = useApp();
+  const { config, me } = useApp();
+  const ro = me.rank === 'viewer';
   const [d, setD] = useState(null);
   const [edit, setEdit] = useState(null);
   const toast = useToast();
@@ -24,12 +25,12 @@ export default function PersonView() {
       <div className="page-head">
         <div><div className="small muted"><a onClick={() => nav('/persons')} style={{ cursor: 'pointer' }}>Persons Directory</a> /</div><h1>{p.name}</h1>
           <div className="row" style={{ marginTop: 6 }}>{roles.map((r) => <RolePill key={r} r={r} />)}</div></div>
-        <button className="btn" onClick={() => setEdit(Object.fromEntries(PERSON_FIELDS.map((f) => [f.k, p[f.k] || ''])))}><Icon n="edit" />Edit Profile</button>
+        {!ro && <button className="btn" onClick={() => setEdit(Object.fromEntries(PERSON_FIELDS.map((f) => [f.k, p[f.k] || ''])))}><Icon n="edit" />Edit Profile</button>}
       </div>
       <div className="grid" style={{ gridTemplateColumns: '260px minmax(0,1fr)' }}>
         <div className="panel panel-b" style={{ textAlign: 'center' }}>
           {p.photo_id ? <img className="person-photo" style={{ width: '100%', height: 260 }} src={`/api/files/${p.photo_id}`} /> : <div className="person-photo" style={{ width: '100%', height: 260 }}><Icon n="user" /></div>}
-          <button className="btn sm" style={{ marginTop: 10 }} onClick={() => photo.current.click()}><Icon n="image" />{p.photo_id ? 'Replace photo' : 'Upload photo'}</button>
+          {!ro && <button className="btn sm" style={{ marginTop: 10 }} onClick={() => photo.current.click()}><Icon n="image" />{p.photo_id ? 'Replace photo' : 'Upload photo'}</button>}
           <input ref={photo} type="file" accept="image/*" hidden onChange={async (e) => {
             const f = e.target.files[0]; if (!f) return; const fd = new FormData(); fd.append('file', f);
             try { await api.upload(`/api/persons/${p.id}/photo`, fd); load(); } catch (er) { toast(er.message, true); }

@@ -40,7 +40,10 @@ auth.mount(app);
 
 // ---------- helpers ----------
 const now = () => new Date().toISOString();
-const RANK_ORDER = { bureau_lead: 7, co_lead: 6, supervisor: 5, lead: 4, det2: 3, det1: 2, trainee: 1 };
+const RANK_ORDER = { admin: 9, bureau_lead: 8, co_lead: 7, supervisor: 6, lead: 5, det2: 4, det1: 3, trainee: 2, viewer: 1 };
+// View-only members (base Detective Bureau role, no rank): can read non-classified cases, can't change anything
+const isViewer = (u) => u.rank === 'viewer';
+const VIEW_ONLY_MSG = 'Your access is view-only. Ask Bureau command if you need more access.';
 // Trainees work cases they're assigned to, but can't open cases, lead them, or sign them off for closure
 const isTrainee = (u) => u.rank === 'trainee';
 function requireUser(req, res, next) {
@@ -71,6 +74,7 @@ const isClassified = (c) => !!secureOf(c).on;
 function canView(user, c) {
   if (!c || !isClassified(c)) return true;
   if (isSup(user)) return true;
+  if (isViewer(user)) return false;
   if (c.created_by === user.id || c.lead_id === user.id) return true;
   if (db.prepare('SELECT 1 FROM case_members WHERE case_id=? AND user_id=?').get(c.id, user.id)) return true;
   const mine = J(user.units, []);
@@ -82,6 +86,7 @@ const redacted = (c) => ({ id: c.id, number: c.number, code: c.code, division: c
   classified_units: unitNames(secureOf(c).units), closure: '{}', opened_at: null, updated_at: c.updated_at, location: '' });
 function canEdit(user, c) {
   if (!c) return false;
+  if (isViewer(user)) return false;
   if (isSup(user)) return true;
   if (c.status === 'Closed' || c.closure?.requested) return false; // locked once submitted/closed
   if (c.created_by === user.id || c.lead_id === user.id) return true;
@@ -232,7 +237,8 @@ app.get('/api/dashboard', requireUser, (req, res) => {
     .map(({ secure, lead_id, created_by, ...a }) => (a.case_id && !canView(me, { id: a.case_id, secure, lead_id, created_by }) ? { ...a, title: null, detail: 'Classified case' } : a))
     .slice(0, 15);
 
-  res.json({ division, isCommand: cmd, isTrainee: isTrainee(me), inactiveDays: INACTIVE_DAYS, stats, mine: mineOpen, inactive, attention, review, warrants, byDivision, workload, recent, serverTime: now() });
+  const recentCases = isViewer(me) ? open.sort((a, b) => (b.last_at || '').localeCompare(a.last_at || '')).slice(0, 10).map(row) : [];
+  res.json({ division, isCommand: cmd, isTrainee: isTrainee(me), isViewer: isViewer(me), recentCases, inactiveDays: INACTIVE_DAYS, stats, mine: mineOpen, inactive, attention, review, warrants, byDivision, workload, recent, serverTime: now() });
 });
 
 // Security alerts page (command only): denied sign-ins, blocked classified access, roster removals/restores
@@ -275,6 +281,7 @@ function nextCaseNumber() {
   return Math.max((max || 0) + 1, start);
 }
 app.post('/api/cases', requireUser, (req, res) => {
+  if (isViewer(req.user)) return res.status(403).json({ error: VIEW_ONLY_MSG });
   if (isTrainee(req.user)) return res.status(403).json({ error: 'Trainees can’t open cases. Ask a detective to open the case and add you to it.' });
   const b = req.body || {};
   const div = config.divisions.find((d) => d.id === b.division);
@@ -358,6 +365,7 @@ app.post('/api/cases/:id/members', requireUser, (req, res) => {
   const u = db.prepare('SELECT * FROM users WHERE id=?').get(Number(req.body.user_id));
   if (!u) return res.status(400).json({ error: 'Unknown user' });
   if (u.active === 0) return res.status(400).json({ error: `${u.display_name} has been removed from the roster.` });
+  if (isViewer(u)) return res.status(400).json({ error: `${u.display_name} has view-only access and can't be added to cases.` });
   db.prepare('INSERT OR REPLACE INTO case_members (case_id,user_id,role) VALUES (?,?,?)').run(c.id, u.id, req.body.role || 'Assistant');
   audit(c.id, req.user.id, 'Investigator added', `${u.display_name} (${req.body.role || 'Assistant'})`);
   touch(c.id); res.json({ ok: true });
@@ -385,6 +393,7 @@ app.get('/api/persons', requireUser, (req, res) => {
      WHERE p.name LIKE ? OR p.ssn LIKE ? OR p.phone LIKE ? ORDER BY p.name LIMIT 300`).all(q, q, q).map((p) => ({ ...p, flags: J(p.flags, []) })));
 });
 app.post('/api/persons', requireUser, (req, res) => {
+  if (isViewer(req.user)) return res.status(403).json({ error: VIEW_ONLY_MSG });
   if (!req.body?.name?.trim()) return res.status(400).json({ error: 'Name is required' });
   res.json({ id: insertPerson(req.body, req.user.id) });
 });
@@ -398,6 +407,7 @@ app.get('/api/persons/:id', requireUser, (req, res) => {
   res.json({ person: p, cases, files });
 });
 app.patch('/api/persons/:id', requireUser, (req, res) => {
+  if (isViewer(req.user)) return res.status(403).json({ error: VIEW_ONLY_MSG });
   const sets = []; const vals = [];
   for (const k of PERSON_FIELDS) if (k in req.body) { sets.push(`${k}=?`); vals.push(k === 'flags' ? JSON.stringify(req.body[k] || []) : req.body[k]); }
   if (sets.length) db.prepare(`UPDATE persons SET ${sets.join(',')}, updated_at=? WHERE id=?`).run(...vals, now(), Number(req.params.id));
@@ -551,7 +561,7 @@ app.post('/api/cases/:id/files', requireUser, (req, res, next) => {
   touch(req.caseObj.id);
   res.json({ ids: out });
 });
-app.post('/api/persons/:pid/photo', requireUser, checkQuota, upload.single('file'), (req, res) => {
+app.post('/api/persons/:pid/photo', requireUser, (req, res, next) => (isViewer(req.user) ? res.status(403).json({ error: VIEW_ONLY_MSG }) : next()), checkQuota, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   if (!enforceQuota([req.file], res)) return;
   const r = db.prepare('INSERT INTO files (person_id,stored_name,original_name,mime,size,caption,uploaded_by,created_at) VALUES (?,?,?,?,?,?,?,?)')
