@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { useApp } from '../App';
-import { Icon, Empty, Modal, RolePill, Status, useToast, fmtDate } from '../ui';
+import { Icon, Empty, Modal, RolePill, Status, useToast, fmtDate , canSeeGangs } from '../ui';
 import { Fields } from '../sections/common';
 import { PERSON_FIELDS } from '../sections/Persons';
 
@@ -10,6 +10,7 @@ export default function PersonView() {
   const { id } = useParams();
   const { config, me } = useApp();
   const ro = me.rank === 'viewer';
+  const gangs = canSeeGangs(me, config);
   const [d, setD] = useState(null);
   const [edit, setEdit] = useState(null);
   const toast = useToast();
@@ -46,7 +47,7 @@ export default function PersonView() {
               <div>Phone</div><div>{p.phone || 'N/A'}</div>
               <div>Address</div><div>{p.address || 'N/A'}</div>
               <div>Description</div><div className="pre">{p.description || 'N/A'}</div>
-              <div>Gang Affiliation</div><div>{p.gangs?.length ? p.gangs.map((g) => <div key={g.id}><Link to={`/gangs/${g.id}`}><b>{g.name}</b></Link>{g.abbreviation ? ` (${g.abbreviation})` : ''} <span className="pill purple">{g.confidence} {g.rank}</span> <span className="faint small">{g.status} gang</span></div>) : 'None known'}</div>
+              {gangs && <>              <div>Gang Affiliation</div><div>{p.gangs?.length ? p.gangs.map((g) => <div key={g.id}><Link to={`/gangs/${g.id}`}><b>{g.name}</b></Link>{g.abbreviation ? ` (${g.abbreviation})` : ''} <span className="pill purple">{g.confidence} {g.rank}</span> <span className="faint small">{g.status} gang</span></div>) : 'None known'}</div></>}
               <div>Other Affiliations</div><div>{p.affiliations || 'N/A'}</div>
               <div>Background</div><div className="pre">{p.background || 'N/A'}</div>
             </div></div>

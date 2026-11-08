@@ -47,6 +47,9 @@ export function Icon({ n, ...rest }) {
   );
 }
 
+// Gang intelligence: Gang & Narcotics Unit members and command only
+export const canSeeGangs = (me, config) => config.commandRanks.includes(me.rank) || (me.units || []).includes('GNU');
+
 // ---------- toast ----------
 const ToastCtx = createContext(() => {});
 export function ToastProvider({ children }) {

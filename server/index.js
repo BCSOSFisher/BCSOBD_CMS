@@ -44,6 +44,10 @@ const now = () => new Date().toISOString();
 const RANK_ORDER = { admin: 9, bureau_lead: 8, co_lead: 7, supervisor: 6, lead: 5, det2: 4, det1: 3, trainee: 2, viewer: 1 };
 // View-only members (base Detective Bureau role, no rank): can read non-classified cases, can't change anything
 const isViewer = (u) => u.rank === 'viewer';
+// Gang intelligence is restricted to Gang & Narcotics Unit members and command
+const canSeeGangs = (u) => isSup(u) || J(u.units, []).includes('GNU');
+const GANG_FIELDS_ON_PERSON = ['gang_id', 'gang_name', 'gang_abbr', 'gang_status', 'gang_rank', 'gang_confidence'];
+const stripGang = (p) => { const o = { ...p }; for (const k of GANG_FIELDS_ON_PERSON) delete o[k]; return o; };
 const VIEW_ONLY_MSG = 'Your access is view-only. Ask Bureau command if you need more access.';
 // Trainees work cases they're assigned to, but can't open cases, lead them, or sign them off for closure
 const isTrainee = (u) => u.rank === 'trainee';
@@ -110,7 +114,7 @@ function caseBundle(c, user) {
     .map((r) => ({ ...userPublic(r), role: r.role }));
   const persons = db.prepare(`SELECT cp.id AS link_id, cp.role AS case_role, cp.notes AS case_notes, cp.custody_status, p.*, g.name AS gang_name, g.status AS gang_status, gm.rank AS gang_rank, gm.confidence AS gang_confidence
       FROM case_persons cp JOIN persons p ON p.id=cp.person_id LEFT JOIN gangs g ON g.id=p.gang_id LEFT JOIN gang_members gm ON gm.gang_id=p.gang_id AND gm.person_id=p.id WHERE cp.case_id=? ORDER BY cp.id`).all(c.id)
-    .map((p) => ({ ...p, flags: J(p.flags, []) }));
+    .map((p) => ({ ...p, flags: J(p.flags, []) })).map((p) => (canSeeGangs(user) ? p : stripGang(p)));
   const items = db.prepare('SELECT * FROM items WHERE case_id=? ORDER BY id').all(c.id).map((i) => ({ ...i, data: J(i.data, {}) }));
   const files = db.prepare('SELECT * FROM files WHERE case_id=? ORDER BY id').all(c.id);
   const links = db.prepare(`SELECT l.id, l.reason, c.id AS case_id, c.number, c.code, c.title, c.status, c.division, c.secure, c.lead_id, c.created_by
@@ -236,6 +240,7 @@ app.get('/api/dashboard', requireUser, (req, res) => {
   const recent = db.prepare(`SELECT a.*, u.display_name, c.code, c.number, c.title, c.division, c.secure, c.lead_id, c.created_by FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id
       WHERE a.action NOT IN (${SECURITY_ACTIONS.map(() => '?').join(',')}) ORDER BY a.id DESC LIMIT 60`).all(...SECURITY_ACTIONS)
     .filter((a) => (division ? a.division === division : true))
+    .filter((a) => canSeeGangs(me) || !/^Gang /.test(a.action))
     .map(({ secure, lead_id, created_by, ...a }) => (a.case_id && !canView(me, { id: a.case_id, secure, lead_id, created_by }) ? { ...a, title: null, detail: 'Classified case' } : a))
     .slice(0, 15);
 
@@ -384,27 +389,27 @@ app.delete('/api/cases/:id/members/:uid', requireUser, (req, res) => {
 
 // ---------- persons ----------
 const PERSON_FIELDS = ['name', 'ssn', 'dob', 'gender', 'phone', 'address', 'description', 'background', 'affiliations', 'flags', 'photo_id'];
-function insertPerson(b, uid) {
+function insertPerson(b, uid, allowGang) {
   const r = db.prepare(`INSERT INTO persons (name,ssn,dob,gender,phone,address,description,background,affiliations,flags,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
     .run(String(b.name || '').trim(), b.ssn || '', b.dob || '', b.gender || '', b.phone || '', b.address || '', b.description || '', b.background || '', b.affiliations || '', JSON.stringify(b.flags || []), uid, now(), now());
   const id = Number(r.lastInsertRowid);
-  if (b.gang_id) gangs.setPrimaryGang(id, b.gang_id, uid);
+  if (b.gang_id && allowGang) gangs.setPrimaryGang(id, b.gang_id, uid);
   return id;
 }
 app.get('/api/persons', requireUser, (req, res) => {
   const q = `%${req.query.q || ''}%`;
   res.json(db.prepare(`SELECT p.*, g.name gang_name, g.abbreviation gang_abbr, (SELECT COUNT(DISTINCT case_id) FROM case_persons WHERE person_id=p.id) case_count FROM persons p LEFT JOIN gangs g ON g.id=p.gang_id
-     WHERE p.name LIKE ? OR p.ssn LIKE ? OR p.phone LIKE ? ORDER BY p.name LIMIT 300`).all(q, q, q).map((p) => ({ ...p, flags: J(p.flags, []) })));
+     WHERE p.name LIKE ? OR p.ssn LIKE ? OR p.phone LIKE ? ORDER BY p.name LIMIT 300`).all(q, q, q).map((p) => ({ ...p, flags: J(p.flags, []) })).map((p) => (canSeeGangs(req.user) ? p : stripGang(p))));
 });
 app.post('/api/persons', requireUser, (req, res) => {
   if (isViewer(req.user)) return res.status(403).json({ error: VIEW_ONLY_MSG });
   if (!req.body?.name?.trim()) return res.status(400).json({ error: 'Name is required' });
-  res.json({ id: insertPerson(req.body, req.user.id) });
+  res.json({ id: insertPerson(req.body, req.user.id, canSeeGangs(req.user)) });
 });
 app.get('/api/persons/:id', requireUser, (req, res) => {
   const p = db.prepare('SELECT * FROM persons WHERE id=?').get(Number(req.params.id));
   if (!p) return res.status(404).json({ error: 'Not found' });
-  p.gangs = db.prepare('SELECT m.rank, m.confidence, g.id, g.name, g.abbreviation, g.status FROM gang_members m JOIN gangs g ON g.id=m.gang_id WHERE m.person_id=?').all(p.id);
+  if (!canSeeGangs(req.user)) { delete p.gang_id; p.gangs = []; } else p.gangs = db.prepare('SELECT m.rank, m.confidence, g.id, g.name, g.abbreviation, g.status FROM gang_members m JOIN gangs g ON g.id=m.gang_id WHERE m.person_id=?').all(p.id);
   p.flags = J(p.flags, []);
   const cases = db.prepare(`SELECT cp.role, cp.notes, c.id, c.number, c.code, c.title, c.status, c.division, c.opened_at, c.secure, c.lead_id, c.created_by FROM case_persons cp JOIN cases c ON c.id=cp.case_id WHERE cp.person_id=? ORDER BY c.number DESC`).all(p.id)
     .map(({ secure, lead_id, created_by, ...c }) => (canView(req.user, { ...c, secure, lead_id, created_by }) ? { ...c, classified: isClassified({ secure }) } : { ...c, title: 'CLASSIFIED', notes: '', role: 'Restricted', status: 'Classified', restricted: true }));
@@ -416,7 +421,7 @@ app.patch('/api/persons/:id', requireUser, (req, res) => {
   const sets = []; const vals = [];
   for (const k of PERSON_FIELDS) if (k in req.body) { sets.push(`${k}=?`); vals.push(k === 'flags' ? JSON.stringify(req.body[k] || []) : req.body[k]); }
   if (sets.length) db.prepare(`UPDATE persons SET ${sets.join(',')}, updated_at=? WHERE id=?`).run(...vals, now(), Number(req.params.id));
-  if ('gang_id' in req.body) gangs.setPrimaryGang(Number(req.params.id), req.body.gang_id, req.user.id);
+  if ('gang_id' in req.body && canSeeGangs(req.user)) gangs.setPrimaryGang(Number(req.params.id), req.body.gang_id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -427,7 +432,7 @@ app.post('/api/cases/:id/persons', requireUser, (req, res) => {
   let pid = Number(b.person_id);
   if (!pid) {
     if (!b.person?.name?.trim()) return res.status(400).json({ error: 'Name is required' });
-    pid = insertPerson(b.person, req.user.id);
+    pid = insertPerson(b.person, req.user.id, canSeeGangs(req.user));
   }
   try {
     db.prepare('INSERT INTO case_persons (case_id,person_id,role,notes) VALUES (?,?,?,?)').run(c.id, pid, b.role, b.notes || '');
@@ -712,7 +717,7 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Warrant packet failed: ' + e.message }); }
 });
 
-gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase });
+gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, canSeeGangs });
 
 // ---------- static client ----------
 const dist = path.join(__dirname, '..', 'dist');

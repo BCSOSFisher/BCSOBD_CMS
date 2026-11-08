@@ -57,9 +57,12 @@ function setPrimaryGang(personId, gangId, uid) {
   if (gangId) db.prepare("INSERT OR IGNORE INTO gang_members (gang_id,person_id,rank,confidence,created_by,created_at,updated_at) VALUES (?,?, 'Associate','Suspected',?,?,?)").run(gangId, personId, uid, now(), now());
 }
 
-function mount(app, { requireUser, isSup, isViewer, audit, canView, getCase }) {
-  // GNU members and command can edit the registry; everyone (incl. view-only) can read it
-  const canEditGangs = (u) => !isViewer(u) && (isSup(u) || J(u.units, []).includes('GNU'));
+function mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, canSeeGangs }) {
+  // Only Gang & Narcotics members and command can see the registry at all
+  const seeGuard = (req, res, next) => (canSeeGangs(req.user) ? next() : res.status(403).json({ error: 'The gang registry is restricted to the Gang & Narcotics Unit.', code: 'gangs_restricted' }));
+  app.use(['/api/gangs', '/api/gang-members', '/api/gang-businesses', '/api/gang-relations'], requireUser, seeGuard);
+  // GNU members and command can view and edit (view-only members with the GNU role can only view)
+  const canEditGangs = (u) => !isViewer(u) && canSeeGangs(u);
   const guard = (req, res) => { if (!canEditGangs(req.user)) { res.status(403).json({ error: 'Only Gang & Narcotics Unit members and command can edit the gang registry.' }); return false; } return true; };
   const gangName = (id) => db.prepare('SELECT name FROM gangs WHERE id=?').get(id)?.name || '';
 

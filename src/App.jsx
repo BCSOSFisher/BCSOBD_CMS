@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { api } from './api';
-import { Icon, Avatar } from './ui';
+import { Icon, Avatar, canSeeGangs } from './ui';
 import Login from './pages/Login';
 import Denied from './pages/Denied';
 import Dashboard from './pages/Dashboard';
@@ -64,14 +64,19 @@ function Shell() {
               <Route path="/penal-code" element={<PenalCode />} />
               <Route path="/roster" element={<Roster />} />
               <Route path="/security" element={<Security />} />
-              <Route path="/gangs" element={<Gangs />} />
-              <Route path="/gangs/:id" element={<GangView />} />
+              <Route path="/gangs" element={<GangGate><Gangs /></GangGate>} />
+              <Route path="/gangs/:id" element={<GangGate><GangView /></GangGate>} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
         </div>
       </div>
   );
+}
+
+function GangGate({ children }) {
+  const { me, config } = useApp();
+  return canSeeGangs(me, config) ? children : <Navigate to="/" replace />;
 }
 
 function Sidebar({ open }) {
@@ -90,7 +95,7 @@ function Sidebar({ open }) {
         <NavItem to="/cases?mine=1" icon="user">My Assignments</NavItem>
         <div className="grp">Records</div>
         <NavItem to="/persons" icon="users">Persons Directory</NavItem>
-        <NavItem to="/gangs" icon="target">Gangs & Organizations</NavItem>
+        {canSeeGangs(me, config) && <NavItem to="/gangs" icon="target">Gangs & Organizations</NavItem>}
         <NavItem to="/penal-code" icon="book">Penal Code</NavItem>
         <div className="grp">Bureau</div>
         <NavItem to="/roster" icon="shield">Personnel Roster</NavItem>

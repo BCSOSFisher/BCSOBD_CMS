@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
+import { useApp } from '../App';
+import { canSeeGangs } from '../ui';
 
 // Gang registry for the 'Gang Affiliation' dropdown (cached for the session)
 let gangCache;
@@ -21,6 +23,8 @@ import { Modal, Field, Icon, Empty, Confirm, useToast, fmtDate } from '../ui';
 
 // Render a set of fields bound to object v / setter
 export function Fields({ fields, v, set, b }) {
+  const { me, config } = useApp();
+  const showGang = canSeeGangs(me, config);
   const persons = b?.persons || [];
   const uniqPersons = [...new Map(persons.map((p) => [p.id, p])).values()];
   return (
@@ -31,7 +35,7 @@ export function Fields({ fields, v, set, b }) {
         let input;
         if (f.type === 'textarea') input = <textarea rows={f.rows || 4} value={val} onChange={on} placeholder={f.ph} />;
         else if (f.type === 'select') input = <select value={val} onChange={on}><option value="">Select…</option>{f.options.map((o) => <option key={o}>{o}</option>)}</select>;
-        else if (f.type === 'gang') input = <GangSelect value={val} onChange={(id) => set({ ...v, [f.k]: id })} />;
+        else if (f.type === 'gang') { if (!showGang) return null; input = <GangSelect value={val} onChange={(id) => set({ ...v, [f.k]: id })} />; }
         else if (f.type === 'person') input = (
           <select value={val} onChange={(e) => set({ ...v, [f.k]: e.target.value ? Number(e.target.value) : '' })}>
             <option value="">{f.ph || 'Select person…'}</option>
