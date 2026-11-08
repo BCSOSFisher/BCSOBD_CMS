@@ -11,6 +11,7 @@ import Persons from './pages/Persons';
 import PersonView from './pages/PersonView';
 import PenalCode from './pages/PenalCode';
 import Roster from './pages/Roster';
+import Security from './pages/Security';
 
 const AppCtx = createContext(null);
 export const useApp = () => useContext(AppCtx);
@@ -61,6 +62,7 @@ function Shell() {
               <Route path="/persons/:id" element={<PersonView />} />
               <Route path="/penal-code" element={<PenalCode />} />
               <Route path="/roster" element={<Roster />} />
+              <Route path="/security" element={<Security />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
@@ -88,9 +90,11 @@ function Sidebar({ open }) {
         <NavItem to="/penal-code" icon="book">Penal Code</NavItem>
         <div className="grp">Bureau</div>
         <NavItem to="/roster" icon="shield">Personnel Roster</NavItem>
-        {config.commandRanks.includes(me.rank) && (
+        {config.commandRanks.includes(me.rank) && <>
+          <div className="grp">Supervisor</div>
           <NavItem to="/?review=1" icon="pen">Supervisor Review{reviewCount > 0 && <span className="count">{reviewCount}</span>}</NavItem>
-        )}
+          <NavItem to="/security" icon="alert">Security Alerts</NavItem>
+        </>}
       </nav>
       <div className="me">
         <Avatar u={me} />

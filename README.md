@@ -121,7 +121,9 @@ An open case with no activity for more than 14 days shows a warning on its Overv
 
 - **Needs Your Attention** lists what's waiting on you: your inactive cases, cases returned by a supervisor, draft warrants, and charge elements not yet established.
 - **Inactive Cases** (14+ days without activity): detectives see their own; command sees every case.
-- **Detective Workload** and **Security Alerts** (denied sign-ins, blocked classified access, roster removals) are shown to command only.
+- **Detective Workload** is shown to command only.
+- **Recent Activity** shows the latest 5 items; click **Show more** for 15.
+- **Security Alerts** has its own page under **Supervisor** in the menu (command only): denied sign-ins, blocked classified access and roster changes, with search, type and date filters. Paste a reference code from the Unauthorized screen to find that attempt.
 - **Unit filter** narrows the dashboard to one unit (remembered per browser). Stat boxes are clickable.
 - **Pending Training** members get a simplified dashboard.
 - The dashboard **refreshes itself** every minute, and immediately when you return to the tab.

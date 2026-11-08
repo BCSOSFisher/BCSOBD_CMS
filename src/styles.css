@@ -434,3 +434,4 @@ table.t tr.click:hover td { background: #f7f9fc; }
   .denied h1 { font-size: 26px; }
   .denied-stripe span:nth-child(n+2) { display: none; }
 }
+.stat-link.sel { border-color: var(--blue); box-shadow: 0 0 0 2px #c7d7f5; }

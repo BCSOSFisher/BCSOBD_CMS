@@ -225,9 +225,6 @@ app.get('/api/dashboard', requireUser, (req, res) => {
       .sort((a, b) => (b.lead + b.assist) - (a.lead + a.assist) || a.display_name.localeCompare(b.display_name));
   }
 
-  // security alerts (command only); these are kept out of Recent Activity
-  const security = cmd ? db.prepare(`SELECT a.*, u.display_name, c.code, c.number FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id
-      WHERE a.action IN (${SECURITY_ACTIONS.map(() => '?').join(',')}) ORDER BY a.id DESC LIMIT 25`).all(...SECURITY_ACTIONS) : [];
 
   const recent = db.prepare(`SELECT a.*, u.display_name, c.code, c.number, c.title, c.division, c.secure, c.lead_id, c.created_by FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id
       WHERE a.action NOT IN (${SECURITY_ACTIONS.map(() => '?').join(',')}) ORDER BY a.id DESC LIMIT 60`).all(...SECURITY_ACTIONS)
@@ -235,7 +232,23 @@ app.get('/api/dashboard', requireUser, (req, res) => {
     .map(({ secure, lead_id, created_by, ...a }) => (a.case_id && !canView(me, { id: a.case_id, secure, lead_id, created_by }) ? { ...a, title: null, detail: 'Classified case' } : a))
     .slice(0, 15);
 
-  res.json({ division, isCommand: cmd, isTrainee: isTrainee(me), inactiveDays: INACTIVE_DAYS, stats, mine: mineOpen, inactive, attention, review, warrants, byDivision, workload, security, recent, serverTime: now() });
+  res.json({ division, isCommand: cmd, isTrainee: isTrainee(me), inactiveDays: INACTIVE_DAYS, stats, mine: mineOpen, inactive, attention, review, warrants, byDivision, workload, recent, serverTime: now() });
+});
+
+// Security alerts page (command only): denied sign-ins, blocked classified access, roster removals/restores
+app.get('/api/security', requireUser, (req, res) => {
+  if (!isSup(req.user)) return res.status(403).json({ error: 'Command only.' });
+  const type = SECURITY_ACTIONS.includes(req.query.type) ? [req.query.type] : SECURITY_ACTIONS;
+  const q = String(req.query.q || '').trim();
+  const days = Math.min(365, Math.max(1, Number(req.query.days) || 30));
+  let sql = `SELECT a.*, u.display_name, c.code, c.number FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id
+     WHERE a.action IN (${type.map(() => '?').join(',')}) AND a.at >= ?`;
+  const p = [...type, new Date(Date.now() - days * 86400000).toISOString()];
+  if (q) { sql += ' AND (u.display_name LIKE ? OR a.detail LIKE ? OR c.code LIKE ?)'; p.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+  const rows = db.prepare(sql + ' ORDER BY a.id DESC LIMIT 500').all(...p);
+  const since24 = new Date(Date.now() - 86400000).toISOString();
+  const counts = Object.fromEntries(SECURITY_ACTIONS.map((t) => [t, db.prepare('SELECT COUNT(*) n FROM audit WHERE action=? AND at >= ?').get(t, since24).n]));
+  res.json({ rows, counts24h: counts, days });
 });
 
 // ---------- cases ----------

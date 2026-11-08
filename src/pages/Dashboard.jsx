@@ -12,6 +12,7 @@ export default function Dashboard() {
   const { me, config, setReviewCount } = useApp();
   const [d, setD] = useState(null);
   const [newCase, setNewCase] = useState(false);
+  const [moreActivity, setMoreActivity] = useState(false);
   const [unit, setUnit] = useState(() => { try { return localStorage.getItem(LS_KEY) || ''; } catch { return ''; } });
   const [, tick] = useState(0);
   const [sp] = useSearchParams();
@@ -158,7 +159,7 @@ export default function Dashboard() {
                 </tr>
               ))}
             </tbody></table>
-          ) : <Empty icon="check" title="Nothing waiting">No cases are pending supervisor sign-off.</Empty>}
+          ) : <div className="panel-b small muted" style={{ padding: '12px 18px' }}><Icon n="check" width="14" style={{ verticalAlign: -2, marginRight: 6, color: 'var(--green)' }} />Nothing waiting — no cases are pending supervisor sign-off.</div>}
         </div>
       )}
 
@@ -215,22 +216,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {d.isCommand && (
-            <div className="panel" style={{ borderColor: d.security.length ? '#f3c1bb' : undefined }}>
-              <div className="panel-h"><h3><Icon n="shield" width="15" style={{ verticalAlign: -2, marginRight: 6, color: 'var(--red)' }} />Security Alerts<span className="sub">Command only</span></h3></div>
-              <div className="panel-b" style={{ display: 'grid', gap: 11, maxHeight: 360, overflow: 'auto' }}>
-                {d.security.length ? d.security.map((a) => (
-                  <div key={a.id} className="small sec-row" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
-                    <span className={`pill ${a.action === 'Restored to roster' ? 'green' : a.action === 'Removed from roster' ? 'gray' : 'red'}`}>{a.action}</span>
-                    <div style={{ marginTop: 4 }}><b>{a.display_name || 'Unknown user'}</b>{a.code && <> · <Link to={`/cases/${a.case_id}`} className="mono">{a.code}</Link></>}</div>
-                    {a.detail && <div className="muted">{a.detail}</div>}
-                    <div className="faint" style={{ fontSize: 11.5 }}>{ago(a.at)}</div>
-                  </div>
-                )) : <span className="muted small">No denied sign-ins, blocked access or roster changes.</span>}
-              </div>
-            </div>
-          )}
-
           {!unit && (
             <div className="panel">
               <div className="panel-h"><h3>Caseload by Division</h3></div>
@@ -249,9 +234,9 @@ export default function Dashboard() {
           )}
 
           <div className="panel">
-            <div className="panel-h"><h3>Recent Activity</h3></div>
+            <div className="panel-h"><h3>Recent Activity</h3>{d.recent.length > 5 && <button className="btn ghost sm" onClick={() => setMoreActivity(!moreActivity)}><Icon n={moreActivity ? 'up' : 'down'} />{moreActivity ? 'Show less' : 'Show more'}</button>}</div>
             <div className="panel-b" style={{ display: 'grid', gap: 12 }}>
-              {d.recent.length ? d.recent.map((a) => (
+              {d.recent.length ? d.recent.slice(0, moreActivity ? 15 : 5).map((a) => (
                 <div key={a.id} className="small" style={{ minWidth: 0 }}>
                   <b>{a.display_name || 'System'}</b> <span className="muted">{a.action.toLowerCase()}</span>{a.code && <> · <Link to={`/cases/${a.case_id}`} className="mono">{a.code}</Link></>}
                   {a.detail && <div className="muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.detail}</div>}
