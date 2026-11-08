@@ -38,7 +38,9 @@ export default function PersonsSection({ b, reload }) {
                   <div><b><Link to={`/persons/${p.id}`}>{p.name}</Link></b><div className="small muted">{[p.ssn && `SSN ${p.ssn}`, p.dob && `DOB ${fmtDate(p.dob)}`].filter(Boolean).join(' · ')}</div></div>
                   <RolePill r={p.case_role} />
                   {p.custody_status && <span className="pill gray">{p.custody_status}</span>}
-                  {p.gang_name && <Link to={`/gangs/${p.gang_id}`} className="pill purple" title={`${p.gang_confidence || 'Suspected'} ${p.gang_rank || 'member'}`}>{p.gang_name}{p.gang_rank ? ` · ${p.gang_rank}` : ''}</Link>}
+                  {p.gang_name && (p.gang_id
+                    ? <Link to={`/gangs/${p.gang_id}`} className="pill purple" title={`${p.gang_confidence || 'Suspected'} ${p.gang_rank || 'member'}`}>{p.gang_name}{p.gang_rank ? ` · ${p.gang_rank}` : ''}</Link>
+                    : <span className="pill purple">{p.gang_name}</span>)}
                   <span className="spacer" />
                   {b.canEdit && <><button className="icon-btn" title="Edit" onClick={() => setEdit(p)}><Icon n="edit" /></button><button className="icon-btn" title="Remove from case" onClick={() => setRm(p)}><Icon n="trash" /></button></>}
                 </div>

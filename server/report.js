@@ -174,7 +174,7 @@ function personBlock(p, label) {
     ['Gender:', p.gender], p.phone ? ['Phone:', p.phone] : null,
     ['Address (If Known):', p.address],
     p.description ? ['Physical Description:', p.description] : null,
-    p.gang_name ? ['Gang Affiliation:', `${p.gang_name} (${p.gang_status || 'Suspected'} gang) — ${p.gang_confidence || 'Suspected'} ${p.gang_rank || 'member'}`] : null,
+    p.gang_name ? ['Gang Affiliation:', p.gang_rank ? `${p.gang_name} (${p.gang_status || 'Suspected'} gang) — ${p.gang_confidence || 'Suspected'} ${p.gang_rank}` : p.gang_name] : null,
     p.affiliations ? ['Other Affiliations:', p.affiliations] : null,
     ['Background:', p.background],
     p.custody_status ? ['Custody Status:', p.custody_status] : null,

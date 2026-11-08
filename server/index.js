@@ -46,7 +46,8 @@ const RANK_ORDER = { admin: 9, bureau_lead: 8, co_lead: 7, supervisor: 6, lead: 
 const isViewer = (u) => u.rank === 'viewer';
 // Gang intelligence is restricted to Gang & Narcotics Unit members and command
 const canSeeGangs = (u) => isSup(u) || J(u.units, []).includes('GNU');
-const GANG_FIELDS_ON_PERSON = ['gang_id', 'gang_name', 'gang_abbr', 'gang_status', 'gang_rank', 'gang_confidence'];
+// Everyone else may see WHICH gang a person is in (name only) — not rank, confidence, status or a link to the registry
+const GANG_FIELDS_ON_PERSON = ['gang_id', 'gang_status', 'gang_rank', 'gang_confidence'];
 const stripGang = (p) => { const o = { ...p }; for (const k of GANG_FIELDS_ON_PERSON) delete o[k]; return o; };
 const VIEW_ONLY_MSG = 'Your access is view-only. Ask Bureau command if you need more access.';
 // Trainees work cases they're assigned to, but can't open cases, lead them, or sign them off for closure
@@ -409,7 +410,7 @@ app.post('/api/persons', requireUser, (req, res) => {
 app.get('/api/persons/:id', requireUser, (req, res) => {
   const p = db.prepare('SELECT * FROM persons WHERE id=?').get(Number(req.params.id));
   if (!p) return res.status(404).json({ error: 'Not found' });
-  if (!canSeeGangs(req.user)) { delete p.gang_id; p.gangs = []; } else p.gangs = db.prepare('SELECT m.rank, m.confidence, g.id, g.name, g.abbreviation, g.status FROM gang_members m JOIN gangs g ON g.id=m.gang_id WHERE m.person_id=?').all(p.id);
+  if (!canSeeGangs(req.user)) { p.gangs = p.gang_id ? db.prepare('SELECT name, abbreviation FROM gangs WHERE id=?').all(p.gang_id) : []; delete p.gang_id; } else p.gangs = db.prepare('SELECT m.rank, m.confidence, g.id, g.name, g.abbreviation, g.status FROM gang_members m JOIN gangs g ON g.id=m.gang_id WHERE m.person_id=?').all(p.id);
   p.flags = J(p.flags, []);
   const cases = db.prepare(`SELECT cp.role, cp.notes, c.id, c.number, c.code, c.title, c.status, c.division, c.opened_at, c.secure, c.lead_id, c.created_by FROM case_persons cp JOIN cases c ON c.id=cp.case_id WHERE cp.person_id=? ORDER BY c.number DESC`).all(p.id)
     .map(({ secure, lead_id, created_by, ...c }) => (canView(req.user, { ...c, secure, lead_id, created_by }) ? { ...c, classified: isClassified({ secure }) } : { ...c, title: 'CLASSIFIED', notes: '', role: 'Restricted', status: 'Classified', restricted: true }));
