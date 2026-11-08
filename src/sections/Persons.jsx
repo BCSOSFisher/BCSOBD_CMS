@@ -10,7 +10,8 @@ export const PERSON_FIELDS = [
   { k: 'gender', label: 'Gender', type: 'select', options: ['Male', 'Female', 'Other', 'Unknown'], span: 1 }, { k: 'phone', label: 'Phone', span: 1 },
   { k: 'address', label: 'Address (If Known)' },
   { k: 'description', label: 'Physical Description', type: 'textarea', rows: 2, ph: 'Height, build, hair, tattoos, clothing…' },
-  { k: 'affiliations', label: 'Known Affiliations', ph: 'Gang / organization / employer', span: 4 },
+  { k: 'gang_id', label: 'Gang Affiliation', type: 'gang', span: 2, hint: 'Adds them to the gang’s member list' },
+  { k: 'affiliations', label: 'Other Affiliations', ph: 'Employer, crew, associates…', span: 2 },
   { k: 'background', label: 'Background', type: 'textarea', rows: 3, ph: 'Employment, vehicles, criminal history…' },
 ];
 
@@ -37,6 +38,7 @@ export default function PersonsSection({ b, reload }) {
                   <div><b><Link to={`/persons/${p.id}`}>{p.name}</Link></b><div className="small muted">{[p.ssn && `SSN ${p.ssn}`, p.dob && `DOB ${fmtDate(p.dob)}`].filter(Boolean).join(' · ')}</div></div>
                   <RolePill r={p.case_role} />
                   {p.custody_status && <span className="pill gray">{p.custody_status}</span>}
+                  {p.gang_name && <Link to={`/gangs/${p.gang_id}`} className="pill purple" title={`${p.gang_confidence || 'Suspected'} ${p.gang_rank || 'member'}`}>{p.gang_name}{p.gang_rank ? ` · ${p.gang_rank}` : ''}</Link>}
                   <span className="spacer" />
                   {b.canEdit && <><button className="icon-btn" title="Edit" onClick={() => setEdit(p)}><Icon n="edit" /></button><button className="icon-btn" title="Remove from case" onClick={() => setRm(p)}><Icon n="trash" /></button></>}
                 </div>

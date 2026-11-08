@@ -119,6 +119,10 @@ Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the lo
 
 An open case with no activity for more than 14 days shows a warning on its Overview page with the date and person of the last activity. Downloading reports doesn't count as activity.
 
+## Gangs & Organizations
+
+A registry of **Recognized** and **Suspected** gangs (menu: Records → Gangs & Organizations). Each gang has members with a **suspected rank** and Confirmed/Suspected membership, **businesses** (legal fronts and illegal operations), **affiliations** with other gangs (ally, rival, supplier…), an intelligence profile, and automatically linked cases. Setting **Gang Affiliation** on a person's profile adds them to that gang's member list; their gang and rank also appear on case person cards and in the downloaded report. Everyone can view the registry; Gang & Narcotics Unit members and command can edit it. Starts with Cartel De Jaurez (CDJ, recognized), Angels of Death MC and Callaghan Crime Group (suspected).
+
 ## Dashboard
 
 - **Needs Your Attention** lists what's waiting on you: your inactive cases, cases returned by a supervisor, draft warrants, and charge elements not yet established.

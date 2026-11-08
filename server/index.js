@@ -22,6 +22,7 @@ for (const c of penalCode) {
   if (curatedElements[c.code]) { c.elements = curatedElements[c.code]; c.curated = true; }
 }
 const { buildCaseReport, buildWarrantPacket } = require('./report');
+const gangs = require('./gangs');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -107,7 +108,8 @@ const userPublic = (u) => u && ({ id: u.id, display_name: u.display_name, userna
 function caseBundle(c, user) {
   const members = db.prepare(`SELECT m.role, u.* FROM case_members m JOIN users u ON u.id=m.user_id WHERE m.case_id=?`).all(c.id)
     .map((r) => ({ ...userPublic(r), role: r.role }));
-  const persons = db.prepare(`SELECT cp.id AS link_id, cp.role AS case_role, cp.notes AS case_notes, cp.custody_status, p.* FROM case_persons cp JOIN persons p ON p.id=cp.person_id WHERE cp.case_id=? ORDER BY cp.id`).all(c.id)
+  const persons = db.prepare(`SELECT cp.id AS link_id, cp.role AS case_role, cp.notes AS case_notes, cp.custody_status, p.*, g.name AS gang_name, g.status AS gang_status, gm.rank AS gang_rank, gm.confidence AS gang_confidence
+      FROM case_persons cp JOIN persons p ON p.id=cp.person_id LEFT JOIN gangs g ON g.id=p.gang_id LEFT JOIN gang_members gm ON gm.gang_id=p.gang_id AND gm.person_id=p.id WHERE cp.case_id=? ORDER BY cp.id`).all(c.id)
     .map((p) => ({ ...p, flags: J(p.flags, []) }));
   const items = db.prepare('SELECT * FROM items WHERE case_id=? ORDER BY id').all(c.id).map((i) => ({ ...i, data: J(i.data, {}) }));
   const files = db.prepare('SELECT * FROM files WHERE case_id=? ORDER BY id').all(c.id);
@@ -385,11 +387,13 @@ const PERSON_FIELDS = ['name', 'ssn', 'dob', 'gender', 'phone', 'address', 'desc
 function insertPerson(b, uid) {
   const r = db.prepare(`INSERT INTO persons (name,ssn,dob,gender,phone,address,description,background,affiliations,flags,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
     .run(String(b.name || '').trim(), b.ssn || '', b.dob || '', b.gender || '', b.phone || '', b.address || '', b.description || '', b.background || '', b.affiliations || '', JSON.stringify(b.flags || []), uid, now(), now());
-  return Number(r.lastInsertRowid);
+  const id = Number(r.lastInsertRowid);
+  if (b.gang_id) gangs.setPrimaryGang(id, b.gang_id, uid);
+  return id;
 }
 app.get('/api/persons', requireUser, (req, res) => {
   const q = `%${req.query.q || ''}%`;
-  res.json(db.prepare(`SELECT p.*, (SELECT COUNT(DISTINCT case_id) FROM case_persons WHERE person_id=p.id) case_count FROM persons p
+  res.json(db.prepare(`SELECT p.*, g.name gang_name, g.abbreviation gang_abbr, (SELECT COUNT(DISTINCT case_id) FROM case_persons WHERE person_id=p.id) case_count FROM persons p LEFT JOIN gangs g ON g.id=p.gang_id
      WHERE p.name LIKE ? OR p.ssn LIKE ? OR p.phone LIKE ? ORDER BY p.name LIMIT 300`).all(q, q, q).map((p) => ({ ...p, flags: J(p.flags, []) })));
 });
 app.post('/api/persons', requireUser, (req, res) => {
@@ -400,6 +404,7 @@ app.post('/api/persons', requireUser, (req, res) => {
 app.get('/api/persons/:id', requireUser, (req, res) => {
   const p = db.prepare('SELECT * FROM persons WHERE id=?').get(Number(req.params.id));
   if (!p) return res.status(404).json({ error: 'Not found' });
+  p.gangs = db.prepare('SELECT m.rank, m.confidence, g.id, g.name, g.abbreviation, g.status FROM gang_members m JOIN gangs g ON g.id=m.gang_id WHERE m.person_id=?').all(p.id);
   p.flags = J(p.flags, []);
   const cases = db.prepare(`SELECT cp.role, cp.notes, c.id, c.number, c.code, c.title, c.status, c.division, c.opened_at, c.secure, c.lead_id, c.created_by FROM case_persons cp JOIN cases c ON c.id=cp.case_id WHERE cp.person_id=? ORDER BY c.number DESC`).all(p.id)
     .map(({ secure, lead_id, created_by, ...c }) => (canView(req.user, { ...c, secure, lead_id, created_by }) ? { ...c, classified: isClassified({ secure }) } : { ...c, title: 'CLASSIFIED', notes: '', role: 'Restricted', status: 'Classified', restricted: true }));
@@ -411,6 +416,7 @@ app.patch('/api/persons/:id', requireUser, (req, res) => {
   const sets = []; const vals = [];
   for (const k of PERSON_FIELDS) if (k in req.body) { sets.push(`${k}=?`); vals.push(k === 'flags' ? JSON.stringify(req.body[k] || []) : req.body[k]); }
   if (sets.length) db.prepare(`UPDATE persons SET ${sets.join(',')}, updated_at=? WHERE id=?`).run(...vals, now(), Number(req.params.id));
+  if ('gang_id' in req.body) gangs.setPrimaryGang(Number(req.params.id), req.body.gang_id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -705,6 +711,8 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
     sendDocx(res, buf, `${c.code} ${J(it.data, {}).type || 'Warrant'} Packet.docx`);
   } catch (e) { console.error(e); res.status(500).json({ error: 'Warrant packet failed: ' + e.message }); }
 });
+
+gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase });
 
 // ---------- static client ----------
 const dist = path.join(__dirname, '..', 'dist');

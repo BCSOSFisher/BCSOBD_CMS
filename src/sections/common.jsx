@@ -1,5 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../api';
+
+// Gang registry for the 'Gang Affiliation' dropdown (cached for the session)
+let gangCache;
+export const loadGangs = (fresh) => ((!gangCache || fresh) ? (gangCache = api.get('/api/gangs').then((r) => r.gangs)) : gangCache);
+function GangSelect({ value, onChange }) {
+  const [g, setG] = useState([]);
+  useEffect(() => { loadGangs().then(setG).catch(() => {}); }, []);
+  const grp = (s) => g.filter((x) => x.status === s);
+  return (
+    <select value={value || ''} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}>
+      <option value="">None / unknown</option>
+      {['Recognized', 'Suspected', 'Inactive'].map((s) => grp(s).length > 0 && (
+        <optgroup key={s} label={`${s} gangs`}>{grp(s).map((x) => <option key={x.id} value={x.id}>{x.name}{x.abbreviation ? ` (${x.abbreviation})` : ''}</option>)}</optgroup>
+      ))}
+    </select>
+  );
+}
 import { Modal, Field, Icon, Empty, Confirm, useToast, fmtDate } from '../ui';
 
 // Render a set of fields bound to object v / setter
@@ -14,6 +31,7 @@ export function Fields({ fields, v, set, b }) {
         let input;
         if (f.type === 'textarea') input = <textarea rows={f.rows || 4} value={val} onChange={on} placeholder={f.ph} />;
         else if (f.type === 'select') input = <select value={val} onChange={on}><option value="">Select…</option>{f.options.map((o) => <option key={o}>{o}</option>)}</select>;
+        else if (f.type === 'gang') input = <GangSelect value={val} onChange={(id) => set({ ...v, [f.k]: id })} />;
         else if (f.type === 'person') input = (
           <select value={val} onChange={(e) => set({ ...v, [f.k]: e.target.value ? Number(e.target.value) : '' })}>
             <option value="">{f.ph || 'Select person…'}</option>

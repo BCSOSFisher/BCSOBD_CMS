@@ -24,12 +24,12 @@ export default function Persons() {
         <div className="panel-h"><input style={{ maxWidth: 360 }} placeholder="Search name, SSN or phone…" value={q} onChange={(e) => setQ(e.target.value)} /><span className="muted small">{rows ? `${rows.length} record(s)` : ''}</span></div>
         {rows && rows.length ? (
           <table className="t">
-            <thead><tr><th style={{ width: 52 }} /><th>Name</th><th>SSN</th><th>DOB</th><th>Address</th><th>Affiliations</th><th>Cases</th></tr></thead>
+            <thead><tr><th style={{ width: 52 }} /><th>Name</th><th>SSN</th><th>DOB</th><th>Address</th><th>Gang</th><th>Cases</th></tr></thead>
             <tbody>{rows.map((p) => (
               <tr key={p.id} className="click" onClick={() => nav(`/persons/${p.id}`)}>
                 <td>{p.photo_id ? <img src={`/api/files/${p.photo_id}`} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover' }} /> : <span className="avatar sm" style={{ background: '#c6cdd8' }}><Icon n="user" width="13" /></span>}</td>
                 <td><b>{p.name}</b></td><td className="mono">{p.ssn || '—'}</td><td>{fmtDate(p.dob) || '—'}</td>
-                <td className="muted">{p.address || '—'}</td><td className="muted">{p.affiliations || '—'}</td><td>{p.case_count}</td>
+                <td className="muted">{p.address || '—'}</td><td>{p.gang_name ? <span className="pill purple">{p.gang_abbr || p.gang_name}</span> : <span className="faint">—</span>}</td><td>{p.case_count}</td>
               </tr>
             ))}</tbody>
           </table>

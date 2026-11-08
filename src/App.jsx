@@ -12,6 +12,7 @@ import PersonView from './pages/PersonView';
 import PenalCode from './pages/PenalCode';
 import Roster from './pages/Roster';
 import Security from './pages/Security';
+import Gangs, { GangView } from './pages/Gangs';
 
 const AppCtx = createContext(null);
 export const useApp = () => useContext(AppCtx);
@@ -63,6 +64,8 @@ function Shell() {
               <Route path="/penal-code" element={<PenalCode />} />
               <Route path="/roster" element={<Roster />} />
               <Route path="/security" element={<Security />} />
+              <Route path="/gangs" element={<Gangs />} />
+              <Route path="/gangs/:id" element={<GangView />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
@@ -87,6 +90,7 @@ function Sidebar({ open }) {
         <NavItem to="/cases?mine=1" icon="user">My Assignments</NavItem>
         <div className="grp">Records</div>
         <NavItem to="/persons" icon="users">Persons Directory</NavItem>
+        <NavItem to="/gangs" icon="target">Gangs & Organizations</NavItem>
         <NavItem to="/penal-code" icon="book">Penal Code</NavItem>
         <div className="grp">Bureau</div>
         <NavItem to="/roster" icon="shield">Personnel Roster</NavItem>
