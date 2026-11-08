@@ -164,21 +164,78 @@ app.patch('/api/users/:id', requireUser, (req, res) => {
 });
 
 // ---------- dashboard ----------
+const INACTIVE_DAYS = 14;
+const SECURITY_ACTIONS = ['Denied sign-in', 'Classified access blocked', 'Removed from roster', 'Restored to roster'];
+const NOT_ACTIVITY = "('Report downloaded','Warrant packet downloaded','Classified access blocked')";
 app.get('/api/dashboard', requireUser, (req, res) => {
-  const uid = req.user.id;
-  const mine = db.prepare(`SELECT DISTINCT c.* FROM cases c LEFT JOIN case_members m ON m.case_id=c.id
-     WHERE (c.lead_id=? OR c.created_by=? OR m.user_id=?) AND c.status!='Closed' ORDER BY c.updated_at DESC`).all(uid, uid, uid).map(caseRow);
-  const byStatus = db.prepare('SELECT status, COUNT(*) n FROM cases GROUP BY status').all();
-  const byDivision = db.prepare(`SELECT division, COUNT(*) n FROM cases WHERE status!='Closed' GROUP BY division`).all();
-  const review = db.prepare(`SELECT * FROM cases WHERE json_extract(closure,'$.requested')=1 ORDER BY updated_at`).all().filter((c) => canView(req.user, c)).map(caseRow);
-  const recent = db.prepare(`SELECT a.*, u.display_name, c.code, c.number, c.title, c.secure, c.lead_id, c.created_by FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id ORDER BY a.id DESC LIMIT 15`).all()
-    .map(({ secure, lead_id, created_by, ...a }) => (a.case_id && !canView(req.user, { id: a.case_id, secure, lead_id, created_by }) ? { ...a, title: null, detail: 'Classified case' } : a));
-  const warrants = db.prepare(`SELECT i.id, i.data, c.id case_id, c.code, c.number, c.secure, c.lead_id, c.created_by FROM items i JOIN cases c ON c.id=i.case_id WHERE i.kind='warrant' AND json_extract(i.data,'$.status') IN ('Draft','Submitted to DOJ')`).all()
-    .filter((w) => canView(req.user, { id: w.case_id, secure: w.secure, lead_id: w.lead_id, created_by: w.created_by }))
-    .map(({ secure, lead_id, created_by, ...w }) => ({ ...w, data: J(w.data, {}) }));
-  const total = db.prepare('SELECT COUNT(*) n FROM cases').get().n;
-  const closed30 = db.prepare(`SELECT COUNT(*) n FROM cases WHERE status='Closed' AND updated_at >= datetime('now','-30 days')`).get().n;
-  res.json({ mine, byStatus, byDivision, review, recent, warrants, total, closed30 });
+  const me = req.user; const uid = me.id;
+  const cmd = isSup(me);
+  const division = config.divisions.some((d) => d.id === req.query.division) ? req.query.division : '';
+  const inDiv = (c) => !division || c.division === division;
+  const days = (iso) => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+
+  // all cases with last meaningful activity, filtered to what this user may see
+  const all = db.prepare(`SELECT c.*, (SELECT MAX(a.at) FROM audit a WHERE a.case_id=c.id AND a.action NOT IN ${NOT_ACTIVITY}) AS last_at FROM cases c`).all()
+    .filter((c) => canView(me, c) && inDiv(c));
+  const memberOf = new Set(db.prepare('SELECT case_id FROM case_members WHERE user_id=?').all(uid).map((r) => r.case_id));
+  const isMine = (c) => c.lead_id === uid || c.created_by === uid || memberOf.has(c.id);
+  const open = all.filter((c) => c.status !== 'Closed');
+  const row = (c) => ({ ...caseRow(c), last_at: c.last_at || c.created_at, idle_days: days(c.last_at || c.created_at) });
+  const mineOpen = open.filter(isMine).sort((a, b) => (b.last_at || '').localeCompare(a.last_at || '')).map(row);
+
+  // inactive: everyone sees their own; command sees every case they can view
+  const inactive = open.filter((c) => (cmd || isMine(c)) && days(c.last_at || c.created_at) > INACTIVE_DAYS).map(row).sort((a, b) => b.idle_days - a.idle_days);
+
+  // warrants (in progress) on visible cases
+  const caseById = Object.fromEntries(all.map((c) => [c.id, c]));
+  const warrants = db.prepare(`SELECT id, case_id, data FROM items WHERE kind='warrant'`).all()
+    .filter((w) => caseById[w.case_id]).map((w) => ({ ...w, data: J(w.data, {}), code: caseById[w.case_id].code, number: caseById[w.case_id].number }))
+    .filter((w) => ['Draft', 'Submitted to DOJ'].includes(w.data.status));
+
+  // needs attention — things waiting on THIS user
+  const myOpenIds = new Set(mineOpen.map((c) => c.id));
+  const outstanding = db.prepare(`SELECT case_id, data FROM items WHERE kind='charge'`).all().filter((ch) => myOpenIds.has(ch.case_id))
+    .reduce((acc, ch) => { const d = J(ch.data, {}); const miss = (d.elements || []).filter((e) => !e.met).length; if (miss) { const k = ch.case_id; acc[k] = acc[k] || { charges: 0, missing: 0 }; acc[k].charges++; acc[k].missing += miss; } return acc; }, {});
+  const attention = {
+    inactive: inactive.filter((c) => myOpenIds.has(c.id)),
+    returned: mineOpen.filter((c) => { const cl = J(c.closure, {}); return cl.rejected && !cl.requested; }).map((c) => ({ ...c, rejected: J(c.closure, {}).rejected })),
+    drafts: warrants.filter((w) => myOpenIds.has(w.case_id) && w.data.status === 'Draft'),
+    outstanding: mineOpen.filter((c) => outstanding[c.id]).map((c) => ({ ...c, ...outstanding[c.id] })),
+  };
+
+  const review = cmd ? all.filter((c) => J(c.closure, {}).requested).map(row) : [];
+  const stats = {
+    active: open.length, total: all.length,
+    pendingWarrant: open.filter((c) => c.status === 'Pending Warrant').length,
+    warrantsInProgress: warrants.length,
+    closed30: all.filter((c) => c.status === 'Closed' && days(c.updated_at) <= 30).length,
+    review: review.length, inactive: inactive.length,
+  };
+  const byDivision = config.divisions.map((d) => ({ division: d.id, n: open.filter((c) => c.division === d.id).length }));
+
+  // detective workload (command only)
+  let workload = [];
+  if (cmd) {
+    const members = db.prepare('SELECT case_id, user_id FROM case_members').all();
+    workload = db.prepare('SELECT * FROM users WHERE active!=0').all().map((u) => {
+      const lead = open.filter((c) => c.lead_id === u.id);
+      const assist = open.filter((c) => c.lead_id !== u.id && members.some((m) => m.case_id === c.id && m.user_id === u.id));
+      return { ...userPublic(u), lead: lead.length, assist: assist.length, idle: lead.filter((c) => days(c.last_at || c.created_at) > INACTIVE_DAYS).length };
+    }).filter((u) => !division || u.units.includes(division) || u.lead || u.assist)
+      .sort((a, b) => (b.lead + b.assist) - (a.lead + a.assist) || a.display_name.localeCompare(b.display_name));
+  }
+
+  // security alerts (command only); these are kept out of Recent Activity
+  const security = cmd ? db.prepare(`SELECT a.*, u.display_name, c.code, c.number FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id
+      WHERE a.action IN (${SECURITY_ACTIONS.map(() => '?').join(',')}) ORDER BY a.id DESC LIMIT 25`).all(...SECURITY_ACTIONS) : [];
+
+  const recent = db.prepare(`SELECT a.*, u.display_name, c.code, c.number, c.title, c.division, c.secure, c.lead_id, c.created_by FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN cases c ON c.id=a.case_id
+      WHERE a.action NOT IN (${SECURITY_ACTIONS.map(() => '?').join(',')}) ORDER BY a.id DESC LIMIT 60`).all(...SECURITY_ACTIONS)
+    .filter((a) => (division ? a.division === division : true))
+    .map(({ secure, lead_id, created_by, ...a }) => (a.case_id && !canView(me, { id: a.case_id, secure, lead_id, created_by }) ? { ...a, title: null, detail: 'Classified case' } : a))
+    .slice(0, 15);
+
+  res.json({ division, isCommand: cmd, isTrainee: isTrainee(me), inactiveDays: INACTIVE_DAYS, stats, mine: mineOpen, inactive, attention, review, warrants, byDivision, workload, security, recent, serverTime: now() });
 });
 
 // ---------- cases ----------

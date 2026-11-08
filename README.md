@@ -117,6 +117,15 @@ Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the lo
 
 An open case with no activity for more than 14 days shows a warning on its Overview page with the date and person of the last activity. Downloading reports doesn't count as activity.
 
+## Dashboard
+
+- **Needs Your Attention** lists what's waiting on you: your inactive cases, cases returned by a supervisor, draft warrants, and charge elements not yet established.
+- **Inactive Cases** (14+ days without activity): detectives see their own; command sees every case.
+- **Detective Workload** and **Security Alerts** (denied sign-ins, blocked classified access, roster removals) are shown to command only.
+- **Unit filter** narrows the dashboard to one unit (remembered per browser). Stat boxes are clickable.
+- **Pending Training** members get a simplified dashboard.
+- The dashboard **refreshes itself** every minute, and immediately when you return to the tab.
+
 ## Classified cases
 
 The **Lead Investigator** (only) can click **Classify** on a case and choose which units may access it. A classified case can be opened by: members of those units (from their Discord unit roles), investigators assigned to the case, and Bureau command. Everyone else sees it as **CLASSIFIED** in lists with no details; it never appears in their searches, and its files, report and linked-case details are blocked. Blocked attempts are logged. The downloaded report is marked **CLASSIFIED — RESTRICTED ACCESS**. The lead can change the units or remove the classification at any time.
