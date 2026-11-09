@@ -119,9 +119,19 @@ Open <http://localhost:3000>. `DEV_LOGIN=true` adds a test sign-in box to the lo
 
 An open case with no activity for more than 14 days shows a warning on its Overview page with the date and person of the last activity. Downloading reports doesn't count as activity.
 
+## Vehicle Directory
+
+Records → Vehicle Directory holds one record per vehicle (plate, make/model, color, VIN, registered owner, flags, notes). A case's **Vehicles** section links vehicles from the directory with a per-case status (Of Interest, Suspect Vehicle, BOLO Issued, Impounded…), so each vehicle's page shows its full case history and owners' profiles list their vehicles. The vehicle's gang link follows the same rule as people: Gang & Narcotics sees and sets it; others see the gang name only.
+
+## Case Transfers
+
+The Lead Investigator (or command) can **Transfer** a case to a new lead, optionally in another unit, with a required reason. The previous lead can stay on as an assistant or come off the case. Every transfer is kept in the case's Transfer History and printed in the report. The case number and code don't change.
+
 ## Gangs & Organizations
 
 A registry of **Recognized** and **Suspected** gangs (menu: Records → Gangs & Organizations). Each gang has members with a **suspected rank** and Confirmed/Suspected membership, **businesses** (legal fronts and illegal operations), **affiliations** with other gangs (ally, rival, supplier…), an intelligence profile, and automatically linked cases. Setting **Gang Affiliation** on a person's profile adds them to that gang's member list; their gang and rank also appear on case person cards and in the downloaded report. The registry is **visible only to Gang & Narcotics Unit members and command** (based on the `UNIT_ROLE_GNU` Discord role at sign-in). Everyone else can see only **which gang** a person is in (the name) on profiles, the directory, case cards and reports — not their rank, membership confidence, or anything in the registry. They don't get the Gangs menu item or the Gang Affiliation dropdown. Starts with Cartel De Jaurez (CDJ, recognized), Angels of Death MC and Callaghan Crime Group (suspected).
+
+The **Link Chart** tab (Gang & Narcotics and command only) draws an interactive map of gangs, members (with ranks), businesses, vehicles and cases, and the rival/ally/supplier links between gangs. Filter to one gang, hide types, hover to highlight connections, drag, zoom, and click any item to open it. Classified cases appear masked.
 
 ## Dashboard
 

@@ -307,6 +307,27 @@ table.t tr.click:hover td { background: #f7f9fc; }
 .sec-row { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
 .sec-row:last-child { border-bottom: 0; padding-bottom: 0; }
 
+/* vehicles */
+.plate { display: inline-block; font-family: var(--mono); font-weight: 700; font-size: 12.5px; letter-spacing: .08em; background: #fff8dc; color: #1d2433; border: 1.5px solid #1d2433; border-radius: 4px; padding: 1px 7px; text-decoration: none !important; white-space: nowrap; }
+.plate.lg { font-size: 18px; padding: 3px 12px; }
+
+/* gangs sub-tabs + link chart */
+.subtabs { display: inline-flex; gap: 4px; background: #e4e8ee; padding: 4px; border-radius: 8px; margin-bottom: 16px; }
+.subtabs button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 7px 14px; border-radius: 6px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+.subtabs button svg { width: 15px; height: 15px; }
+.subtabs button.on { background: #fff; color: var(--text); box-shadow: var(--shadow); }
+.lc-wrap { background: radial-gradient(circle at 50% 40%, #fbfcfe, #eef1f5); border-bottom: 1px solid var(--line); }
+.lc { width: 100%; height: auto; display: block; user-select: none; cursor: grab; touch-action: none; }
+.lc:active { cursor: grabbing; }
+.lc-label { font: 600 12px Inter, sans-serif; fill: #1d2433; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.lc-sub { font: 500 10.5px Inter, sans-serif; fill: #5d6879; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+.lc-gang { font: 700 13px 'JetBrains Mono', monospace; fill: #fff; text-anchor: middle; }
+.lc-elabel { font: 600 11px Inter, sans-serif; text-anchor: middle; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.lc-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 5px -1px 2px; }
+.lc-line { display: inline-block; width: 18px; height: 3px; vertical-align: 3px; margin-right: 5px; border-radius: 2px; }
+.lc-line.dash { background: repeating-linear-gradient(90deg, #7fbf99 0 5px, transparent 5px 9px); }
+.lc-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+
 /* gangs */
 .gang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .gang-card { display: flex; gap: 14px; align-items: flex-start; text-align: left; font: inherit; color: inherit; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); cursor: pointer; transition: border-color .15s, transform .15s; }

@@ -54,6 +54,14 @@ export default function PersonView() {
               <div>Background</div><div className="pre">{p.background || 'N/A'}</div>
             </div></div>
           </div>
+          {d.vehicles?.length > 0 && (
+            <div className="panel">
+              <div className="panel-h"><h3>Registered Vehicles<span className="sub">{d.vehicles.length}</span></h3></div>
+              <table className="t"><tbody>{d.vehicles.map((v) => (
+                <tr key={v.id} className="click" onClick={() => nav(`/vehicles/${v.id}`)}><td style={{ width: 130 }}><span className="plate">{v.plate || '—'}</span></td><td><b>{[v.color, v.model].filter(Boolean).join(' ')}</b>{v.flags && <span className="pill red" style={{ marginLeft: 8 }}>{v.flags}</span>}</td><td className="small muted">{v.case_count} case(s)</td></tr>
+              ))}</tbody></table>
+            </div>
+          )}
           <div className="panel">
             <div className="panel-h"><h3>Case History<span className="sub">{d.cases.length} case(s)</span></h3></div>
             {d.cases.length ? (

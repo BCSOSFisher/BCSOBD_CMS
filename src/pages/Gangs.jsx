@@ -19,6 +19,17 @@ const GANG_FIELDS = [
   { k: 'notes', label: 'Intelligence Notes', type: 'textarea', rows: 3 },
 ];
 
+// Sub-tabs under Gangs & Organizations
+export function GangTabs({ active }) {
+  const nav = useNavigate();
+  return (
+    <div className="subtabs">
+      <button className={active === 'registry' ? 'on' : ''} onClick={() => nav('/gangs')}><Icon n="users" />Registry</button>
+      <button className={active === 'chart' ? 'on' : ''} onClick={() => nav('/gangs/chart')}><Icon n="link" />Link Chart</button>
+    </div>
+  );
+}
+
 export default function Gangs() {
   const [d, setD] = useState(null);
   const [add, setAdd] = useState(null);
@@ -29,6 +40,7 @@ export default function Gangs() {
   if (!d) return <div className="muted">Loading…</div>;
   return (
     <>
+      <GangTabs active="registry" />
       <div className="page-head">
         <div><h1>Gangs & Organizations</h1><p>Recognized and suspected criminal organizations — members and suspected ranks, businesses, and affiliations.</p></div>
         {d.canEdit && <button className="btn primary" onClick={() => setAdd({ status: 'Suspected' })}><Icon n="plus" />Add Gang</button>}

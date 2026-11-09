@@ -3,15 +3,6 @@ import { Status, fmtDate, today, nowTime } from '../ui';
 
 // Field-driven optional sections. Keys match config.optionalSections.
 export const GENERIC = {
-  vehicles: {
-    kind: 'vehicle', title: 'Vehicles', sub: 'Vehicles of interest', icon: 'car', addLabel: 'Add Vehicle',
-    fields: [
-      { k: 'plate', label: 'Plate' }, { k: 'model', label: 'Make / Model' }, { k: 'color', label: 'Color' },
-      { k: 'owner', label: 'Registered Owner' }, { k: 'vin', label: 'VIN' }, { k: 'status', label: 'Status', type: 'select', options: ['Of Interest', 'BOLO Issued', 'Impounded', 'Seized', 'Released', 'Cleared'] },
-      { k: 'notes', label: 'Relevance to Investigation', type: 'textarea', rows: 3 },
-    ],
-    display: { title: (d) => `${d.plate || 'No plate'} — ${d.model || 'Unknown vehicle'}`, badge: (d) => d.status && <span className="pill gray">{d.status}</span> },
-  },
   bolos: {
     kind: 'bolo', title: 'BOLOs', sub: 'Be-on-the-lookout notices', icon: 'radio', addLabel: 'Issue BOLO',
     fields: [

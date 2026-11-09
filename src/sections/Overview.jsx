@@ -77,7 +77,7 @@ export function Overview({ b, reload }) {
                 <td>{m.id === c.lead_id ? <span className="pill navy">Lead Investigator</span> : <span className="pill gray">{m.role}</span>}</td>
                 <td style={{ textAlign: 'right' }}>
                   {b.canManage && m.id !== c.lead_id && <>
-                    {m.rank !== 'trainee' && <button className="btn ghost sm" onClick={() => save({ lead_id: m.id })}>Make lead</button>}
+                    
                     <button className="icon-btn" onClick={() => setRm(m)}><Icon n="x" /></button>
                   </>}
                 </td>
@@ -97,6 +97,19 @@ export function Overview({ b, reload }) {
           </div>
         )}
       </SectionPanel>
+
+      {(c.transfers || []).length > 0 && (
+        <SectionPanel title="Transfer History" sub={`${c.transfers.length} transfer(s)`}>
+          <table className="t" style={{ border: '1px solid var(--line)' }}>
+            <thead><tr><th>Date</th><th>From</th><th>To</th><th>Unit</th><th>Reason</th><th>By</th></tr></thead>
+            <tbody>{[...c.transfers].reverse().map((t, i) => (
+              <tr key={i}><td className="small" style={{ whiteSpace: 'nowrap' }}>{fmtDate(t.at)}</td><td>{t.from_name}</td><td><b>{t.to_name}</b></td>
+                <td className="small">{t.from_division === t.to_division ? <span className="faint">—</span> : <>{config.divisions.find((d) => d.id === t.from_division)?.short} → <b>{config.divisions.find((d) => d.id === t.to_division)?.short}</b></>}</td>
+                <td className="small">{t.reason}</td><td className="small muted">{t.by}</td></tr>
+            ))}</tbody>
+          </table>
+        </SectionPanel>
+      )}
 
       <SectionPanel title="Audit Trail" sub="Every change to this case file is recorded">
         <div style={{ maxHeight: 320, overflow: 'auto' }}>

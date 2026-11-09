@@ -61,6 +61,36 @@ function mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, can
   // Only Gang & Narcotics members and command can see the registry at all
   const seeGuard = (req, res, next) => (canSeeGangs(req.user) ? next() : res.status(403).json({ error: 'The gang registry is restricted to the Gang & Narcotics Unit.', code: 'gangs_restricted' }));
   app.use(['/api/gangs', '/api/gang-members', '/api/gang-businesses', '/api/gang-relations'], requireUser, seeGuard);
+
+  // Link chart data: gangs, members, businesses, vehicles and cases as a graph
+  app.get('/api/gangs/graph', requireUser, (req, res) => {
+    const nodes = new Map(); const edges = [];
+    const add = (id, n) => { if (!nodes.has(id)) nodes.set(id, { id, ...n }); };
+    const gangs = db.prepare('SELECT * FROM gangs').all();
+    for (const g of gangs) add('g' + g.id, { type: 'gang', label: g.abbreviation || g.name, title: g.name, status: g.status, ref: g.id });
+    for (const r of db.prepare('SELECT * FROM gang_relations').all()) edges.push({ a: 'g' + r.gang_id, b: 'g' + r.other_id, kind: 'relation', label: r.relation });
+    const members = db.prepare('SELECT m.*, p.name FROM gang_members m JOIN persons p ON p.id=m.person_id').all();
+    for (const m of members) { add('p' + m.person_id, { type: 'person', label: m.name, ref: m.person_id, rank: m.rank }); edges.push({ a: 'g' + m.gang_id, b: 'p' + m.person_id, kind: 'member', label: `${m.confidence === 'Confirmed' ? '' : 'Susp. '}${m.rank}` }); }
+    for (const b of db.prepare('SELECT * FROM gang_businesses').all()) { add('b' + b.id, { type: 'business', label: b.name, legality: b.legality, ref: b.gang_id }); edges.push({ a: 'g' + b.gang_id, b: 'b' + b.id, kind: 'business', label: b.legality }); }
+    const memberIds = new Set(members.map((m) => m.person_id));
+    const vehicles = db.prepare('SELECT * FROM vehicles').all().filter((v) => v.gang_id || memberIds.has(v.owner_person_id));
+    for (const v of vehicles) {
+      add('v' + v.id, { type: 'vehicle', label: v.plate || v.model || 'Vehicle', title: [v.plate, v.color, v.model].filter(Boolean).join(' '), ref: v.id });
+      if (v.owner_person_id && memberIds.has(v.owner_person_id)) edges.push({ a: 'p' + v.owner_person_id, b: 'v' + v.id, kind: 'owns', label: 'owner' });
+      if (v.gang_id) edges.push({ a: 'g' + v.gang_id, b: 'v' + v.id, kind: 'gangveh', label: 'gang vehicle' });
+    }
+    const caseRows = [
+      ...db.prepare('SELECT cp.case_id, cp.person_id, cp.role FROM case_persons cp').all().filter((r) => memberIds.has(r.person_id)).map((r) => ({ cid: r.case_id, from: 'p' + r.person_id, label: r.role })),
+      ...db.prepare('SELECT cv.case_id, cv.vehicle_id, cv.status FROM case_vehicles cv').all().filter((r) => nodes.has('v' + r.vehicle_id)).map((r) => ({ cid: r.case_id, from: 'v' + r.vehicle_id, label: r.status })),
+    ];
+    for (const r of caseRows) {
+      const c = getCase(r.cid); if (!c) continue;
+      const ok = canView(req.user, c);
+      add('c' + c.id, { type: 'case', label: `#${c.number}`, title: ok ? `${c.code} — ${c.title}` : `${c.code} — CLASSIFIED`, ref: c.id, restricted: !ok, status: ok ? c.status : 'Classified' });
+      edges.push({ a: r.from, b: 'c' + c.id, kind: 'case', label: ok ? r.label : '' });
+    }
+    res.json({ nodes: [...nodes.values()], edges });
+  });
   // GNU members and command can view and edit (view-only members with the GNU role can only view)
   const canEditGangs = (u) => !isViewer(u) && canSeeGangs(u);
   const guard = (req, res) => { if (!canEditGangs(req.user)) { res.status(403).json({ error: 'Only Gang & Narcotics Unit members and command can edit the gang registry.' }); return false; } return true; };

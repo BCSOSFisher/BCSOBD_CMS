@@ -23,6 +23,7 @@ for (const c of penalCode) {
 }
 const { buildCaseReport, buildWarrantPacket } = require('./report');
 const gangs = require('./gangs');
+const vehicles = require('./vehicles');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -69,7 +70,7 @@ function audit(caseId, userId, action, detail = '') {
 function getCase(id) {
   const c = db.prepare('SELECT * FROM cases WHERE id=?').get(Number(id));
   if (!c) return null;
-  for (const k of ['bureau_units', 'other_agencies', 'sections']) c[k] = J(c[k], []);
+  for (const k of ['bureau_units', 'other_agencies', 'sections', 'transfers']) c[k] = J(c[k], []);
   for (const k of ['scene', 'coroner', 'closure', 'secure']) c[k] = J(c[k], {});
   return c;
 }
@@ -81,7 +82,7 @@ function canView(user, c) {
   if (!c || !isClassified(c)) return true;
   if (isSup(user)) return true;
   if (isViewer(user)) return false;
-  if (c.created_by === user.id || c.lead_id === user.id) return true;
+  if (c.lead_id === user.id) return true;
   if (db.prepare('SELECT 1 FROM case_members WHERE case_id=? AND user_id=?').get(c.id, user.id)) return true;
   const mine = J(user.units, []);
   return (secureOf(c).units || []).some((u) => mine.includes(u));
@@ -95,11 +96,11 @@ function canEdit(user, c) {
   if (isViewer(user)) return false;
   if (isSup(user)) return true;
   if (c.status === 'Closed' || c.closure?.requested) return false; // locked once submitted/closed
-  if (c.created_by === user.id || c.lead_id === user.id) return true;
+  if (c.lead_id === user.id) return true;
   return !!db.prepare('SELECT 1 FROM case_members WHERE case_id=? AND user_id=?').get(c.id, user.id);
 }
 function canManageMembers(user, c) {
-  return isSup(user) || c.created_by === user.id || c.lead_id === user.id;
+  return isSup(user) || c.lead_id === user.id;
 }
 function loadCaseForEdit(req, res) {
   const c = getCase(req.params.id);
@@ -118,6 +119,7 @@ function caseBundle(c, user) {
     .map((p) => ({ ...p, flags: J(p.flags, []) })).map((p) => (canSeeGangs(user) ? p : stripGang(p)));
   const items = db.prepare('SELECT * FROM items WHERE case_id=? ORDER BY id').all(c.id).map((i) => ({ ...i, data: J(i.data, {}) }));
   const files = db.prepare('SELECT * FROM files WHERE case_id=? ORDER BY id').all(c.id);
+  const caseVehicles = vehicles.caseVehicles(c.id).map((v) => { const g = v.gang_id ? db.prepare('SELECT name FROM gangs WHERE id=?').get(v.gang_id)?.name : null; return canSeeGangs(user) ? { ...v, gang_name: g } : { ...v, gang_id: null, gang_name: g }; });
   const links = db.prepare(`SELECT l.id, l.reason, c.id AS case_id, c.number, c.code, c.title, c.status, c.division, c.secure, c.lead_id, c.created_by
       FROM case_links l JOIN cases c ON c.id = CASE WHEN l.a=? THEN l.b ELSE l.a END WHERE l.a=? OR l.b=?`).all(c.id, c.id, c.id)
     .map((l) => { const lc = { ...l, id: l.case_id }; const ok = canView(user, lc); const { secure, lead_id, created_by, ...rest } = l; return ok ? { ...rest, classified: isClassified(lc) } : { ...rest, title: 'CLASSIFIED', status: 'Classified', reason: '', restricted: true }; });
@@ -127,7 +129,7 @@ function caseBundle(c, user) {
   const auditRows = db.prepare('SELECT a.*, u.display_name FROM audit a LEFT JOIN users u ON u.id=a.user_id WHERE case_id=? ORDER BY a.id DESC LIMIT 200').all(c.id);
   const users = Object.fromEntries(db.prepare('SELECT * FROM users').all().map((u) => [u.id, userPublic(u)]));
   return {
-    case: c, members, persons, items, files, links, audit: auditRows, lastActivity,
+    case: c, members, persons, items, files, links, vehicles: caseVehicles, audit: auditRows, lastActivity,
     creator: users[c.created_by], lead: users[c.lead_id],
     canEdit: canEdit(user, c), canManage: canManageMembers(user, c), isSupervisor: isSup(user),
     canClassify: c.lead_id === user.id, classifiedUnits: unitNames(c.secure?.units),
@@ -190,7 +192,7 @@ app.get('/api/dashboard', requireUser, (req, res) => {
   const all = db.prepare(`SELECT c.*, (SELECT MAX(a.at) FROM audit a WHERE a.case_id=c.id AND a.action NOT IN ${NOT_ACTIVITY}) AS last_at FROM cases c`).all()
     .filter((c) => canView(me, c) && inDiv(c));
   const memberOf = new Set(db.prepare('SELECT case_id FROM case_members WHERE user_id=?').all(uid).map((r) => r.case_id));
-  const isMine = (c) => c.lead_id === uid || c.created_by === uid || memberOf.has(c.id);
+  const isMine = (c) => c.lead_id === uid || memberOf.has(c.id);
   const open = all.filter((c) => c.status !== 'Closed');
   const row = (c) => ({ ...caseRow(c), last_at: c.last_at || c.created_at, idle_days: days(c.last_at || c.created_at) });
   const mineOpen = open.filter(isMine).sort((a, b) => (b.last_at || '').localeCompare(a.last_at || '')).map(row);
@@ -272,7 +274,7 @@ app.get('/api/cases', requireUser, (req, res) => {
   const p = [];
   if (status) { sql += ' AND c.status=?'; p.push(status); }
   if (division) { sql += ' AND c.division=?'; p.push(division); }
-  if (mine) { sql += ' AND (c.lead_id=? OR c.created_by=? OR m.user_id=?)'; p.push(req.user.id, req.user.id, req.user.id); }
+  if (mine) { sql += ' AND (c.lead_id=? OR m.user_id=?)'; p.push(req.user.id, req.user.id); }
   if (q) {
     sql += ` AND (c.title LIKE ? OR c.code LIKE ? OR CAST(c.number AS TEXT)=? OR c.location LIKE ? OR c.id IN
       (SELECT cp.case_id FROM case_persons cp JOIN persons pp ON pp.id=cp.person_id WHERE pp.name LIKE ? OR pp.ssn LIKE ?))`;
@@ -415,7 +417,8 @@ app.get('/api/persons/:id', requireUser, (req, res) => {
   const cases = db.prepare(`SELECT cp.role, cp.notes, c.id, c.number, c.code, c.title, c.status, c.division, c.opened_at, c.secure, c.lead_id, c.created_by FROM case_persons cp JOIN cases c ON c.id=cp.case_id WHERE cp.person_id=? ORDER BY c.number DESC`).all(p.id)
     .map(({ secure, lead_id, created_by, ...c }) => (canView(req.user, { ...c, secure, lead_id, created_by }) ? { ...c, classified: isClassified({ secure }) } : { ...c, title: 'CLASSIFIED', notes: '', role: 'Restricted', status: 'Classified', restricted: true }));
   const files = db.prepare('SELECT * FROM files WHERE person_id=? ORDER BY id DESC').all(p.id);
-  res.json({ person: p, cases, files });
+  const ownedVehicles = vehicles.personVehicles(p.id);
+  res.json({ person: p, cases, files, vehicles: ownedVehicles });
 });
 app.patch('/api/persons/:id', requireUser, (req, res) => {
   if (isViewer(req.user)) return res.status(403).json({ error: VIEW_ONLY_MSG });
@@ -627,6 +630,37 @@ app.delete('/api/links/:lid', requireUser, (req, res) => {
   res.json({ ok: true });
 });
 
+// ---------- case transfer (Lead Investigator or command) ----------
+app.post('/api/cases/:id/transfer', requireUser, (req, res) => {
+  const c = getCase(req.params.id); if (!c) return res.status(404).end();
+  if (!(c.lead_id === req.user.id || isSup(req.user))) return res.status(403).json({ error: 'Only the Lead Investigator or command can transfer this case.' });
+  if (c.status === 'Closed' || c.closure?.requested) return res.status(400).json({ error: 'Closed cases, or cases awaiting sign-off, can’t be transferred.' });
+  const to = db.prepare('SELECT * FROM users WHERE id=?').get(Number(req.body.to_user_id));
+  if (!to || to.active === 0) return res.status(400).json({ error: 'Choose an active detective to transfer the case to.' });
+  if (['trainee', 'viewer'].includes(to.rank)) return res.status(400).json({ error: `${to.display_name} can’t lead a case.` });
+  const reason = String(req.body.reason || '').trim().slice(0, 400);
+  if (!reason) return res.status(400).json({ error: 'Give a reason for the transfer.' });
+  const div = config.divisions.find((d) => d.id === req.body.division) || config.divisions.find((d) => d.id === c.division);
+  const from = c.lead_id ? db.prepare('SELECT * FROM users WHERE id=?').get(c.lead_id) : null;
+  if (from && from.id === to.id && div.id === c.division) return res.status(400).json({ error: 'Nothing to change — pick a different detective or unit.' });
+  // new lead
+  db.prepare('INSERT OR IGNORE INTO case_members (case_id,user_id,role) VALUES (?,?,?)').run(c.id, to.id, 'Lead Investigator');
+  db.prepare("UPDATE case_members SET role='Lead Investigator' WHERE case_id=? AND user_id=?").run(c.id, to.id);
+  // previous lead stays as assistant, or comes off the case
+  if (from && from.id !== to.id) {
+    if (req.body.keep_previous) db.prepare("UPDATE case_members SET role='Assistant' WHERE case_id=? AND user_id=?").run(c.id, from.id);
+    else db.prepare('DELETE FROM case_members WHERE case_id=? AND user_id=?').run(c.id, from.id);
+  }
+  const units = [...new Set([...(c.bureau_units || []), div.name])];
+  const entry = { at: now(), from_id: from?.id || null, from_name: from?.display_name || '—', to_id: to.id, to_name: to.display_name,
+    from_division: c.division, to_division: div.id, reason, by: req.user.display_name, kept_previous: !!req.body.keep_previous };
+  db.prepare('UPDATE cases SET lead_id=?, division=?, bureau_units=?, transfers=?, updated_at=? WHERE id=?')
+    .run(to.id, div.id, JSON.stringify(units), JSON.stringify([...(c.transfers || []), entry]), now(), c.id);
+  const divName = (id) => config.divisions.find((d) => d.id === id)?.short || id;
+  audit(c.id, req.user.id, 'Case transferred', `${entry.from_name} → ${to.display_name}${div.id !== c.division ? ` · ${divName(c.division)} → ${divName(div.id)}` : ''} — ${reason}`);
+  res.json({ ok: true });
+});
+
 // ---------- classification (Lead Investigator only) ----------
 app.post('/api/cases/:id/classify', requireUser, (req, res) => {
   const c = getCase(req.params.id); if (!c) return res.status(404).end();
@@ -719,6 +753,7 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
 });
 
 gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, canSeeGangs });
+vehicles.mount(app, { requireUser, isSup, isViewer, audit, canView, canEdit, getCase, canSeeGangs, touch });
 
 // ---------- static client ----------
 const dist = path.join(__dirname, '..', 'dist');

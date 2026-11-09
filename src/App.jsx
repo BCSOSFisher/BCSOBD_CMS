@@ -13,6 +13,8 @@ import PenalCode from './pages/PenalCode';
 import Roster from './pages/Roster';
 import Security from './pages/Security';
 import Gangs, { GangView } from './pages/Gangs';
+import Vehicles, { VehicleView } from './pages/Vehicles';
+import LinkChart from './pages/LinkChart';
 
 const AppCtx = createContext(null);
 export const useApp = () => useContext(AppCtx);
@@ -64,7 +66,10 @@ function Shell() {
               <Route path="/penal-code" element={<PenalCode />} />
               <Route path="/roster" element={<Roster />} />
               <Route path="/security" element={<Security />} />
+              <Route path="/vehicles" element={<Vehicles />} />
+              <Route path="/vehicles/:id" element={<VehicleView />} />
               <Route path="/gangs" element={<GangGate><Gangs /></GangGate>} />
+              <Route path="/gangs/chart" element={<GangGate><LinkChart /></GangGate>} />
               <Route path="/gangs/:id" element={<GangGate><GangView /></GangGate>} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
@@ -95,6 +100,7 @@ function Sidebar({ open }) {
         <NavItem to="/cases?mine=1" icon="user">My Assignments</NavItem>
         <div className="grp">Records</div>
         <NavItem to="/persons" icon="users">Persons Directory</NavItem>
+        <NavItem to="/vehicles" icon="car">Vehicle Directory</NavItem>
         {canSeeGangs(me, config) && <NavItem to="/gangs" icon="target">Gangs & Organizations</NavItem>}
         <NavItem to="/penal-code" icon="book">Penal Code</NavItem>
         <div className="grp">Bureau</div>

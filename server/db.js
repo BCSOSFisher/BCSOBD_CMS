@@ -106,6 +106,8 @@ for (const [c, def] of [['active', 'INTEGER DEFAULT 1'], ['deactivated_at', 'TEX
 // Classified cases: secure = {on:1, units:[division ids], by, by_id, at, reason}
 const caseCols = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name);
 if (!caseCols.includes('secure')) db.exec("ALTER TABLE cases ADD COLUMN secure TEXT DEFAULT '{}'");
+// Case transfer history: [{at, from_id, from_name, to_id, to_name, from_division, to_division, reason, by}]
+if (!caseCols.includes('transfers')) db.exec("ALTER TABLE cases ADD COLUMN transfers TEXT DEFAULT '[]'");
 
 const J = (s, d) => { try { return s == null ? d : JSON.parse(s); } catch { return d; } };
 

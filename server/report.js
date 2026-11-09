@@ -338,6 +338,7 @@ async function buildCaseReport(bundle, { config, penalCode, user, uploadDir }) {
     ['Detective Bureau Units Involved:', (c.bureau_units || []).join(', ')],
     ['Other Agencies Involved:', (c.other_agencies || []).join(', ') || 'N/A'],
     ['Charges Investigated:', charges.map((ch, i) => `[${i + 1}] ${ch.data.code} — ${ch.data.name}`).join('\n') || 'N/A'],
+    (c.transfers || []).length ? ['Transfer History:', c.transfers.map((t) => `${fmtDate(t.at)}: ${t.from_name} → ${t.to_name}${t.from_division !== t.to_division ? ` (${t.from_division} → ${t.to_division})` : ''} — ${t.reason}`).join('\n')] : null,
   ]));
 
   H('Incident Report', dt(c.incident_date, c.incident_time, c.incident_tz) ? `Date of Incident: ${dt(c.incident_date, c.incident_time, c.incident_tz)}` : '');
@@ -376,8 +377,15 @@ async function buildCaseReport(bundle, { config, penalCode, user, uploadDir }) {
   body.push(...interviewBlocks(stmts, S, 'Witness / Victim Statement'));
   body.push(...interviewBlocks(sus, S, 'Suspect Interview Notes'));
 
+  if (secOn('vehicles') || (bundle.vehicles || []).length) {
+    H('Vehicles of Interest');
+    body.push(...((bundle.vehicles || []).length ? bundle.vehicles.flatMap((v) => [kv([
+      ['Plate:', v.plate], ['Make / Model:', v.model], ['Color:', v.color], v.vin ? ['VIN:', v.vin] : null,
+      ['Registered Owner:', v.owner_name || v.owner_text], v.gang_name ? ['Gang Link:', v.gang_name] : null,
+      ['Status in Case:', v.vstatus], ['Relevance:', v.vnotes],
+    ]), blank(80)]) : [para('None recorded.', { italics: true, color: '666666' })]));
+  }
   const extra = [
-    ['vehicles', 'vehicle', 'Vehicles of Interest', [['Plate:', 'plate'], ['Make / Model:', 'model'], ['Color:', 'color'], ['Registered Owner:', 'owner'], ['Relevance:', 'notes']]],
     ['bolos', 'bolo', 'BOLOs Issued', [['Subject:', 'subject'], ['Type:', 'type'], ['Issued:', (d) => dt(d.date, d.time)], ['Description:', 'description'], ['Status:', 'status']]],
     ['surveillance', 'surveillance', 'Surveillance Log', [['Date / Time:', (d) => dt(d.date, d.time) + (d.end_time ? ' – ' + d.end_time : '')], ['Location:', 'location'], ['Officers:', 'officers'], ['Target:', 'target'], ['Observations:', 'observations']]],
     ['informants', 'informant', 'Confidential Informant Information', [['CI Reference:', 'ci'], ['Handler:', 'handler'], ['Reliability:', 'reliability'], ['Date:', 'date'], ['Information Provided:', 'information'], ['Corroboration:', 'corroboration']]],
