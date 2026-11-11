@@ -25,7 +25,7 @@ export function DuplicateModal({ name, matches, useLabel = 'Use this person', on
           </div>
         ))}
       </div>
-      <p className="small muted" style={{ marginBottom: 0 }}>Only create a new profile if this is a different person with the same name.</p>
+      <p className="small muted" style={{ marginBottom: 0 }}>Only create a new profile if this is genuinely a different person.</p>
     </Modal>
   );
 }

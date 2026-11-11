@@ -196,6 +196,6 @@ All data lives in `DATA_DIR`: `bcdb.sqlite` plus an `uploads/` folder. Back up t
 
 ## Duplicate persons & feedback
 
-- **Duplicate check:** creating a person (directory, case or gang) with the same name or SSN as an existing profile shows a warning with the matches. Detectives can use the existing profile or create a new one anyway.
+- **Duplicate check:** creating a person (directory, case or gang) with the same name **and** SSN as an existing profile shows a warning with the matches. Detectives can use the existing profile or create a new one anyway.
 - **Merging (command):** *Merge Duplicate* on a profile, or *Find Duplicates* in the Persons Directory. Cases, charges, interviews, warrants, coroner decedent, gang membership, vehicles and photos move to the kept profile; blank details are filled from the duplicate, then the duplicate is deleted. Logged on each affected case.
 - **Feedback** (sidebar → Bureau): anyone can send a suggestion, problem or question. Command is notified, can set a status (New, Under Review, Planned, Done, Declined) and reply; the sender is notified.

@@ -6,19 +6,15 @@ const normName = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' 
 // SSN / State ID: ignore blanks and placeholders like "unknown" or "N/A"
 const normSsn = (s) => { const v = String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); return v.length >= 3 && !/^(unknown|none|na|nil|tbd|0+)$/.test(v) ? v : ''; };
 
-// Every person whose name or SSN matches. Reason says why, so the detective can judge.
+// Every person with the same name AND the same SSN / State ID (both must be filled in and match).
 function findDuplicates(p, excludeId = 0) {
   const name = normName(p.name); const ssn = normSsn(p.ssn);
-  if (!name && !ssn) return [];
+  if (!name || !ssn) return [];
   const rows = db.prepare(`SELECT p.id, p.name, p.ssn, p.dob, p.photo_id, p.address,
       (SELECT COUNT(DISTINCT case_id) FROM case_persons WHERE person_id=p.id) case_count FROM persons p WHERE p.id != ?`).all(Number(excludeId) || 0);
-  const out = [];
-  for (const r of rows) {
-    const sameSsn = ssn && normSsn(r.ssn) === ssn;
-    const sameName = name && normName(r.name) === name;
-    if (sameSsn || sameName) out.push({ ...r, reason: sameSsn && sameName ? 'Same name and SSN' : sameSsn ? 'Same SSN / State ID' : 'Same name' });
-  }
-  return out.sort((a, b) => (b.reason.length - a.reason.length) || b.case_count - a.case_count).slice(0, 8);
+  return rows.filter((r) => normName(r.name) === name && normSsn(r.ssn) === ssn)
+    .map((r) => ({ ...r, reason: 'Same name and SSN' }))
+    .sort((a, b) => b.case_count - a.case_count).slice(0, 8);
 }
 
 // Returns true (and sends a 409) when the new person looks like an existing one and the user hasn't confirmed.

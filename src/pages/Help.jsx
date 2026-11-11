@@ -145,7 +145,7 @@ export default function Help() {
       id: 'records', icon: 'car', title: 'Persons & vehicles',
       body: <>
         <p>The <Link to="/persons">Persons Directory</Link> and <Link to="/vehicles">Vehicle Directory</Link> are shared across the Bureau. Each record shows every case it appears in. Vehicles are searched by plate and can be linked to an owner.</p>
-        <p>When you create a new person, the system checks for an existing profile with the same name or SSN. If it finds one, choose <b>Use this person</b> to keep their history in one place — only create a new profile if it's genuinely a different person.{cmd && <> Command can combine duplicates with <b>Merge Duplicate</b> on a profile, or review them all with <b>Find Duplicates</b> in the directory.</>}</p>
+        <p>When you create a new person, the system checks for an existing profile with the same name and SSN. If it finds one, choose <b>Use this person</b> to keep their history in one place — only create a new profile if it's genuinely a different person.{cmd && <> Command can combine duplicates with <b>Merge Duplicate</b> on a profile, or review them all with <b>Find Duplicates</b> in the directory.</>}</p>
         {!gangs && <p className="small muted">A person's gang affiliation (name only) may show on their profile. Full gang intelligence is restricted to the Gang & Narcotics Unit.</p>}
       </>,
     },
