@@ -180,3 +180,8 @@ To change them, set `MAX_UPLOAD_MB` and `MAX_FILES_PER_CASE` in Railway's Variab
 ## Backups
 
 All data lives in `DATA_DIR`: `bcdb.sqlite` plus an `uploads/` folder. Back up that folder; on Railway, volume backups are under the volume's settings.
+
+## Notifications & Help
+
+- **Bell icon (top bar):** in-app notifications only, nothing goes to Discord. Detectives are notified when they're added to a case, a case is transferred to or away from them, a case they're on changes status, a warrant changes status, or a closure is signed off, returned or reopened. Command is notified when a case is submitted for sign-off. Read notifications are cleared automatically after 30 days.
+- **Help & Guide** (sidebar → Bureau): a searchable guide for new detectives that adapts to the reader's rank (G&N and command sections only show to them).

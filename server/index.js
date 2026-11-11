@@ -24,6 +24,7 @@ for (const c of penalCode) {
 const { buildCaseReport, buildWarrantPacket } = require('./report');
 const gangs = require('./gangs');
 const vehicles = require('./vehicles');
+const notif = require('./notify');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -67,6 +68,7 @@ const isSup = (u) => (config.commandRanks || ['supervisor']).includes(u.rank);
 function audit(caseId, userId, action, detail = '') {
   db.prepare('INSERT INTO audit (case_id,user_id,action,detail,at) VALUES (?,?,?,?,?)').run(caseId, userId, action, String(detail).slice(0, 500), now());
 }
+const CMD_RANKS = () => config.commandRanks || ['supervisor'];
 function getCase(id) {
   const c = db.prepare('SELECT * FROM cases WHERE id=?').get(Number(id));
   if (!c) return null;
@@ -335,7 +337,10 @@ app.patch('/api/cases/:id', requireUser, (req, res) => {
     if (k === 'status') {
       if (!config.statuses.includes(v)) return res.status(400).json({ error: 'Invalid status' });
       if (v === 'Closed' && !isSup(req.user)) return res.status(403).json({ error: 'Cases are closed through supervisor sign-off (Review & Closure).' });
-      if (v !== c.status) audit(c.id, req.user.id, 'Status changed', `${c.status} → ${v}`);
+      if (v !== c.status) {
+        audit(c.id, req.user.id, 'Status changed', `${c.status} → ${v}`);
+        notif.notify(notif.caseMembers(c.id), { caseId: c.id, kind: 'status', title: `${c.code} status changed to ${v}`, body: `Was: ${c.status}`, actorId: req.user.id });
+      }
     }
     if (k === 'lead_id') {
       if (!canManageMembers(req.user, c)) return res.status(403).json({ error: 'Only the lead or a supervisor can reassign the lead.' });
@@ -345,6 +350,7 @@ app.patch('/api/cases/:id', requireUser, (req, res) => {
       db.prepare("UPDATE case_members SET role='Lead Investigator' WHERE case_id=? AND user_id=?").run(c.id, v);
       if (c.lead_id && c.lead_id !== v) db.prepare("UPDATE case_members SET role='Assistant' WHERE case_id=? AND user_id=?").run(c.id, c.lead_id);
       audit(c.id, req.user.id, 'Lead reassigned', db.prepare('SELECT display_name FROM users WHERE id=?').get(v)?.display_name);
+      if (v !== c.lead_id) notif.notify([v], { caseId: c.id, kind: 'transfer', title: `You are now Lead Investigator on ${c.code}`, body: c.title, actorId: req.user.id });
     }
     if (typeof v === 'object' && v !== null) v = JSON.stringify(v);
     sets.push(`${k}=?`); vals.push(v);
@@ -378,6 +384,7 @@ app.post('/api/cases/:id/members', requireUser, (req, res) => {
   if (isViewer(u)) return res.status(400).json({ error: `${u.display_name} has view-only access and can't be added to cases.` });
   db.prepare('INSERT OR REPLACE INTO case_members (case_id,user_id,role) VALUES (?,?,?)').run(c.id, u.id, req.body.role || 'Assistant');
   audit(c.id, req.user.id, 'Investigator added', `${u.display_name} (${req.body.role || 'Assistant'})`);
+  notif.notify([u.id], { caseId: c.id, kind: 'assigned', title: `You were added to ${c.code} as ${req.body.role || 'Assistant'}`, body: c.title, actorId: req.user.id });
   touch(c.id); res.json({ ok: true });
 });
 app.delete('/api/cases/:id/members/:uid', requireUser, (req, res) => {
@@ -504,6 +511,8 @@ app.patch('/api/items/:itemId', requireUser, (req, res) => {
   if (r.it.kind === 'medialink' && !hasTitle(data.title)) return res.status(400).json({ error: TITLE_MSG });
   db.prepare('UPDATE items SET data=?, updated_at=? WHERE id=?').run(JSON.stringify(data), now(), r.it.id);
   if (!req.body.silent) audit(r.c.id, req.user.id, `${KIND_LABEL[r.it.kind]} updated`, itemLabel(r.it.kind, data));
+  if (r.it.kind === 'warrant' && data.status && data.status !== r.it.data.status)
+    notif.notify(notif.caseMembers(r.c.id), { caseId: r.c.id, kind: 'warrant', title: `${data.type || 'Warrant'} on ${r.c.code}: ${data.status}`, body: `Was: ${r.it.data.status || '—'}${data.subject ? ' · ' + data.subject : ''}`, actorId: req.user.id });
   touch(r.c.id);
   res.json({ ok: true, data });
 });
@@ -661,6 +670,10 @@ app.post('/api/cases/:id/transfer', requireUser, (req, res) => {
     .run(to.id, div.id, JSON.stringify(units), JSON.stringify([...(c.transfers || []), entry]), now(), c.id);
   const divName = (id) => config.divisions.find((d) => d.id === id)?.short || id;
   audit(c.id, req.user.id, 'Case transferred', `${entry.from_name} → ${to.display_name}${div.id !== c.division ? ` · ${divName(c.division)} → ${divName(div.id)}` : ''} — ${reason}`);
+  if (to.id !== from?.id) notif.notify([to.id], { caseId: c.id, kind: 'transfer', title: `${c.code} was transferred to you`, body: `From ${entry.from_name} — ${reason}`, actorId: req.user.id });
+  if (from && from.id !== to.id) notif.notify([from.id], { caseId: c.id, kind: 'transfer', title: `${c.code} was transferred to ${to.display_name}`, body: req.body.keep_previous ? `You remain on the case as Assistant — ${reason}` : `You were removed from the case — ${reason}`, actorId: req.user.id });
+  const others = notif.caseMembers(c.id).filter((id) => id !== to.id && id !== from?.id);
+  notif.notify(others, { caseId: c.id, kind: 'transfer', title: `${c.code} has a new Lead Investigator: ${to.display_name}`, body: reason, actorId: req.user.id });
   res.json({ ok: true });
 });
 
@@ -692,6 +705,7 @@ app.post('/api/cases/:id/closure/submit', requireUser, (req, res) => {
     detective_sig: { user_id: req.user.id, name: req.user.display_name, rank: req.user.rank, signed_at: now() }, rejected: null };
   db.prepare('UPDATE cases SET closure=?, updated_at=? WHERE id=?').run(JSON.stringify(closure), now(), c.id);
   audit(c.id, req.user.id, 'Submitted for closure', 'Detective declaration signed');
+  notif.notify(notif.commandUsers(CMD_RANKS()), { caseId: c.id, kind: 'review', title: `${c.code} is awaiting supervisor sign-off`, body: `Submitted by ${req.user.display_name}${closure.disposition ? ' · ' + closure.disposition : ''}`, actorId: req.user.id });
   res.json({ ok: true });
 });
 app.post('/api/cases/:id/closure/withdraw', requireUser, (req, res) => {
@@ -709,6 +723,7 @@ app.post('/api/cases/:id/closure/approve', requireUser, (req, res) => {
   const closure = { ...c.closure, requested: 0, approved: 1, supervisor_sig: { user_id: req.user.id, name: req.user.display_name, rank: req.user.rank, signed_at: now(), comment: req.body.comment || '' } };
   db.prepare("UPDATE cases SET closure=?, status='Closed', updated_at=? WHERE id=?").run(JSON.stringify(closure), now(), c.id);
   audit(c.id, req.user.id, 'Supervisor sign-off', 'Case closed');
+  notif.notify([...notif.caseMembers(c.id), c.closure?.detective_sig?.user_id], { caseId: c.id, kind: 'approved', title: `${c.code} was signed off and closed`, body: `By ${req.user.display_name}${req.body.comment ? ' — ' + req.body.comment : ''}`, actorId: req.user.id });
   res.json({ ok: true });
 });
 app.post('/api/cases/:id/closure/reject', requireUser, (req, res) => {
@@ -717,6 +732,7 @@ app.post('/api/cases/:id/closure/reject', requireUser, (req, res) => {
   const closure = { ...c.closure, requested: 0, detective_sig: null, rejected: { by: req.user.display_name, at: now(), reason: req.body.reason || '' } };
   db.prepare('UPDATE cases SET closure=?, updated_at=? WHERE id=?').run(JSON.stringify(closure), now(), c.id);
   audit(c.id, req.user.id, 'Returned by supervisor', req.body.reason || '');
+  notif.notify([...notif.caseMembers(c.id), c.closure?.detective_sig?.user_id], { caseId: c.id, kind: 'returned', title: `${c.code} was returned by a supervisor`, body: req.body.reason || 'No reason given', actorId: req.user.id });
   res.json({ ok: true });
 });
 app.post('/api/cases/:id/reopen', requireUser, (req, res) => {
@@ -725,6 +741,7 @@ app.post('/api/cases/:id/reopen', requireUser, (req, res) => {
   const closure = { history: [...(c.closure.history || []), { ...c.closure, history: undefined }] };
   db.prepare("UPDATE cases SET closure=?, status='Open', updated_at=? WHERE id=?").run(JSON.stringify(closure), now(), c.id);
   audit(c.id, req.user.id, 'Case reopened', req.body.reason || '');
+  notif.notify(notif.caseMembers(c.id), { caseId: c.id, kind: 'reopened', title: `${c.code} was reopened`, body: req.body.reason || '', actorId: req.user.id });
   res.json({ ok: true });
 });
 
@@ -756,6 +773,7 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
 });
 
 gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, canSeeGangs });
+notif.mount(app, { requireUser });
 vehicles.mount(app, { requireUser, isSup, isViewer, audit, canView, canEdit, getCase, canSeeGangs, touch });
 
 // ---------- static client ----------

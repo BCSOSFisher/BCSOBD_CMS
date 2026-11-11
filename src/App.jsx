@@ -15,6 +15,8 @@ import Security from './pages/Security';
 import Gangs, { GangView } from './pages/Gangs';
 import Vehicles, { VehicleView } from './pages/Vehicles';
 import LinkChart from './pages/LinkChart';
+import Help from './pages/Help';
+import Bell from './Notifications';
 
 const AppCtx = createContext(null);
 export const useApp = () => useContext(AppCtx);
@@ -71,6 +73,7 @@ function Shell() {
               <Route path="/gangs" element={<GangGate><Gangs /></GangGate>} />
               <Route path="/gangs/chart" element={<GangGate><LinkChart /></GangGate>} />
               <Route path="/gangs/:id" element={<GangGate><GangView /></GangGate>} />
+              <Route path="/help" element={<Help />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
@@ -105,6 +108,7 @@ function Sidebar({ open }) {
         <NavItem to="/penal-code" icon="book">Penal Code</NavItem>
         <div className="grp">Bureau</div>
         <NavItem to="/roster" icon="shield">Personnel Roster</NavItem>
+        <NavItem to="/help" icon="help">Help & Guide</NavItem>
         {config.commandRanks.includes(me.rank) && <>
           <div className="grp">Supervisor</div>
           <NavItem to="/?review=1" icon="pen">Supervisor Review{reviewCount > 0 && <span className="count">{reviewCount}</span>}</NavItem>
@@ -142,6 +146,7 @@ function Topbar({ onMenu }) {
         <Icon n="search" />
         <input placeholder="Search cases, case #, persons, SSN…" value={q} onChange={(e) => setQ(e.target.value)} />
       </form>
+      <Bell />
       <div className="clock">{t.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
   );
