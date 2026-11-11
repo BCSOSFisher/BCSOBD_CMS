@@ -37,7 +37,7 @@ export default function Interviews({ b, reload }) {
               {d.counsel && <span><b>Counsel:</b> {d.counsel}</span>}
             </div>
             {d.summary && <div className="pre small" style={{ marginBottom: 8 }}><b>Summary: </b>{d.summary}</div>}
-            {d.statement && <div className="pre" style={{ background: '#f8f9fb', padding: 10, borderRadius: 6, marginBottom: 8 }}>{d.statement}</div>}
+            {d.statement && <div className="pre" style={{ background: 'var(--subtle)', padding: 10, borderRadius: 6, marginBottom: 8 }}>{d.statement}</div>}
             {(d.qa || []).length > 0 && (
               <>
                 <button className="btn ghost sm" style={{ paddingLeft: 0 }} onClick={() => setOpen({ ...open, [it.id]: !open[it.id] })}><Icon n={open[it.id] ? 'up' : 'down'} />{open[it.id] ? 'Hide' : 'Show'} transcript ({d.qa.length} Q&A)</button>

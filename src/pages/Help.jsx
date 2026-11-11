@@ -26,6 +26,7 @@ export default function Help() {
           <li><b>Dashboard</b> — your open cases, anything that needs attention, cases going inactive, and recent activity.</li>
           <li><b>Case Files</b> — every case in the Bureau. <b>My Assignments</b> shows only cases you're on.</li>
           <li><b>Search</b> (top bar) — finds cases by number, title, person or SSN.</li>
+          <li><b>Moon / sun icon</b> (top right) — switches between dark and light mode. Your choice is remembered on that device; until you pick, it follows your device's setting.</li>
           <li><b>Bell icon</b> (top right) — your notifications. See <a href="#notifications">Notifications</a>.</li>
         </ul>
         <p>Your current rank: <b>{config.ranks[me.rank]}</b>{(me.units || []).length > 0 && <> · Units: <b>{me.units.map((u) => config.divisions.find((d) => d.id === u)?.short || u).join(', ')}</b></>}.</p>

@@ -47,7 +47,7 @@ export default function PenalCode() {
                 {sel.fine && <span className="pill gray">Fine: {sel.fine}</span>}
               </div>
               <div style={{ lineHeight: 1.6 }}>{sel.definition}</div>
-              {sel.details?.length > 0 && <div className="small" style={{ marginTop: 12, lineHeight: 1.55, color: '#344054' }}>{sel.details.map((d, i) => <p key={i} style={{ margin: '0 0 6px' }}>{d}</p>)}</div>}
+              {sel.details?.length > 0 && <div className="small" style={{ marginTop: 12, lineHeight: 1.55, color: 'var(--text2)' }}>{sel.details.map((d, i) => <p key={i} style={{ margin: '0 0 6px' }}>{d}</p>)}</div>}
               <hr className="sep" />
               <div className="tag" style={{ marginBottom: 8 }}>Elements to prove{sel.curated ? ' · hand-written' : ' · auto-generated from statute'}</div>
               <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.55 }}>{sel.elements.map((e) => <li key={e.key} style={{ marginBottom: 6 }}>{e.text}{e.proof && <div className="small faint"><i>Typical proof:</i> {e.proof}</div>}</li>)}</ol>

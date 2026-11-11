@@ -185,3 +185,5 @@ All data lives in `DATA_DIR`: `bcdb.sqlite` plus an `uploads/` folder. Back up t
 
 - **Bell icon (top bar):** in-app notifications only, nothing goes to Discord. Detectives are notified when they're added to a case, a case is transferred to or away from them, a case they're on changes status, a warrant changes status, or a closure is signed off, returned or reopened. Command is notified when a case is submitted for sign-off. Read notifications are cleared automatically after 30 days.
 - **Help & Guide** (sidebar → Bureau): a searchable guide for new detectives that adapts to the reader's rank (G&N and command sections only show to them).
+
+- **Dark mode:** the moon/sun button in the top bar switches themes. It's saved per device and follows the device's own light/dark setting until someone picks.

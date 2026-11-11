@@ -126,7 +126,7 @@ export function GangView() {
               <table className="t"><thead><tr><th style={{ width: 46 }} /><th>Name</th><th>Suspected Rank</th><th>Membership</th><th>Notes</th>{ce && <th />}</tr></thead><tbody>
                 {members.map((m) => (
                   <tr key={m.id}>
-                    <td>{m.photo_id ? <img src={`/api/files/${m.photo_id}`} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover' }} /> : <span className="avatar sm" style={{ background: '#c6cdd8' }}><Icon n="user" width="13" /></span>}</td>
+                    <td>{m.photo_id ? <img src={`/api/files/${m.photo_id}`} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover' }} /> : <span className="avatar sm" style={{ background: 'var(--line-strong)' }}><Icon n="user" width="13" /></span>}</td>
                     <td><Link to={`/persons/${m.person_id}`}><b>{m.name}</b></Link><div className="small muted">{[m.ssn && `SSN ${m.ssn}`, m.dob && `DOB ${fmtDate(m.dob)}`].filter(Boolean).join(' · ')}</div></td>
                     <td>{ce ? <select style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }} value={m.rank} onChange={(e) => run(() => api.patch(`/api/gang-members/${m.id}`, { rank: e.target.value }), 'Rank updated')}>{RANKS.map((r) => <option key={r}>{r}</option>)}</select> : <b>{m.rank}</b>}</td>
                     <td>{ce ? <select style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }} value={m.confidence} onChange={(e) => run(() => api.patch(`/api/gang-members/${m.id}`, { confidence: e.target.value }))}><option>Suspected</option><option>Confirmed</option></select>

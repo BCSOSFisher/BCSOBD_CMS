@@ -59,7 +59,7 @@ export default function Dashboard() {
   );
 
   const attention = (
-    <div className="panel" style={{ marginBottom: 16, borderColor: attCount ? '#e7cf85' : undefined }}>
+    <div className="panel" style={{ marginBottom: 16, borderColor: attCount ? 'var(--amber-line)' : undefined }}>
       <div className="panel-h"><h3><Icon n="alert" width="15" style={{ verticalAlign: -2, marginRight: 6, color: attCount ? 'var(--amber)' : 'var(--green)' }} />Needs Your Attention<span className="sub">{attCount ? `${attCount} item(s) waiting on you` : 'Nothing waiting on you'}</span></h3></div>
       {attCount ? (
         <div className="attention">
@@ -103,7 +103,7 @@ export default function Dashboard() {
     return (
       <>
         {head}
-        <div className="panel panel-b" style={{ marginBottom: 16, background: '#f4f6f9' }}>
+        <div className="panel panel-b" style={{ marginBottom: 16, background: 'var(--subtle)' }}>
           <div className="row" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
             <Icon n="eye" width="22" height="22" style={{ color: 'var(--muted)', flex: 'none', marginTop: 2 }} />
             <div>
@@ -134,7 +134,7 @@ export default function Dashboard() {
     return (
       <>
         {head}
-        <div className="panel panel-b" style={{ marginBottom: 16, background: 'var(--blue-soft)', borderColor: '#c7d7f5' }}>
+        <div className="panel panel-b" style={{ marginBottom: 16, background: 'var(--blue-soft)', borderColor: 'var(--focus)' }}>
           <div className="row" style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
             <Icon n="shield" width="22" height="22" style={{ color: 'var(--blue)', flex: 'none', marginTop: 2 }} />
             <div>
@@ -178,7 +178,7 @@ export default function Dashboard() {
       {attention}
 
       {d.isCommand && (
-        <div className="panel" ref={reviewRef} style={{ marginBottom: 16, borderColor: d.review.length ? '#e7cf85' : undefined }}>
+        <div className="panel" ref={reviewRef} style={{ marginBottom: 16, borderColor: d.review.length ? 'var(--amber-line)' : undefined }}>
           <div className="panel-h"><h3><Icon n="pen" width="15" style={{ verticalAlign: -2, marginRight: 6 }} />Supervisor Review Queue<span className="sub">Cases submitted for closure</span></h3></div>
           {d.review.length ? (
             <table className="t"><thead><tr><th>Case</th><th>Title</th><th>Lead</th><th>Submitted</th><th /></tr></thead><tbody>

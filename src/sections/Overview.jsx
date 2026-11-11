@@ -178,7 +178,7 @@ function InactivityNotice({ b }) {
   if (days <= INACTIVE_DAYS) return null;
   const suspended = c.status === 'Suspended';
   return (
-    <div className="inactive-notice" role="alert" style={suspended ? { background: '#f1f3f6', borderColor: 'var(--line-strong)', color: 'var(--muted)' } : undefined}>
+    <div className="inactive-notice" role="alert" style={suspended ? { background: 'var(--subtle)', borderColor: 'var(--line-strong)', color: 'var(--muted)' } : undefined}>
       <div className="ico"><Icon n="clock" /></div>
       <div>
         <b>{suspended ? 'Suspended case — ' : ''}No activity for {days} days</b>

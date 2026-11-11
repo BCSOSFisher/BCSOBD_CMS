@@ -23,7 +23,7 @@ export function OwnerPicker({ value, text, onChange }) {
   return (
     <div style={{ position: 'relative' }}>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search persons directory…" />
-      {res.length > 0 && <div className="charge-pick" style={{ position: 'absolute', zIndex: 5, left: 0, right: 0, background: '#fff', boxShadow: 'var(--shadow)' }}>
+      {res.length > 0 && <div className="charge-pick" style={{ position: 'absolute', zIndex: 5, left: 0, right: 0, background: 'var(--panel)', boxShadow: 'var(--shadow)' }}>
         {res.map((p) => <div key={p.id} className="opt" onClick={() => { onChange(p.id); setName(p.name); setQ(''); setRes([]); }}><b>{p.name}</b> <span className="small muted">{p.ssn && `SSN ${p.ssn}`}</span></div>)}
       </div>}
     </div>

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 
 // ---------- icons (inline, stroke style) ----------
 const P = {
+  moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+  sun: 'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42',
   bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
   help: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01',
   dash: 'M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z',
@@ -154,4 +156,29 @@ export function Confirm({ text, onYes, onClose, yes = 'Delete', danger = true })
       <p style={{ margin: 0 }}>{text}</p>
     </Modal>
   );
+}
+
+// ---------- light / dark theme ----------
+// Saved per browser. Until someone picks, it follows the device's setting.
+const THEME_KEY = 'bcdb-theme';
+const readTheme = () => { try { return localStorage.getItem(THEME_KEY) || 'system'; } catch { return 'system'; } };
+const sysDark = () => !!window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+const resolve = (t) => (t === 'dark' || (t === 'system' && sysDark()) ? 'dark' : 'light');
+export function useTheme() {
+  const [pref, setPref] = useState(readTheme);
+  const [mode, setMode] = useState(() => resolve(readTheme()));
+  useEffect(() => {
+    const apply = () => { const m = resolve(pref); setMode(m); document.documentElement.setAttribute('data-theme', m); };
+    apply();
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    mq?.addEventListener?.('change', apply);
+    return () => mq?.removeEventListener?.('change', apply);
+  }, [pref]);
+  const set = (t) => { try { localStorage.setItem(THEME_KEY, t); } catch {} setPref(t); };
+  return { pref, mode, set, toggle: () => set(mode === 'dark' ? 'light' : 'dark') };
+}
+export function ThemeToggle() {
+  const { mode, toggle } = useTheme();
+  const label = mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  return <button className="theme-btn" onClick={toggle} title={label} aria-label={label}><Icon n={mode === 'dark' ? 'sun' : 'moon'} /></button>;
 }

@@ -21,7 +21,7 @@ export default function Warrants({ b, reload }) {
   return (
     <SectionPanel title="Warrants" sub="Prepare the DOJ packet here, then submit on the DOJ website"
       actions={b.canEdit && <button className="btn primary sm" onClick={() => setEdit({ data: { status: 'Draft', affiant: me.display_name, prepared_date: today(), charge_ids: [], evidence_ids: [], interview_ids: [] } })}><Icon n="plus" />New Warrant Request</button>}>
-      <div className="small muted" style={{ background: '#f8f9fb', border: '1px solid var(--line)', borderRadius: 6, padding: '10px 12px', marginBottom: 14 }}>
+      <div className="small muted" style={{ background: 'var(--subtle)', border: '1px solid var(--line)', borderRadius: 6, padding: '10px 12px', marginBottom: 14 }}>
         <b>Workflow:</b> 1) Create the request and select the supporting charges, evidence and statements → 2) <b>Download Warrant Packet</b> → 3) Upload the .docx to Google Drive (it opens as a Google Doc with formatting intact) and share it → 4) Submit on the DOJ website → 5) Update the status and DOJ reference here.
       </div>
       {!items.length && <Empty icon="gavel" title="No warrant requests" />}

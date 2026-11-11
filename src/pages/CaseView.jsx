@@ -127,7 +127,7 @@ export default function CaseView() {
         </div>
       )}
       {c.closure?.rejected && !c.closure?.requested && c.status !== 'Closed' && (
-        <div className="readonly-banner" style={{ background: 'var(--red-soft)', color: 'var(--red)', borderColor: '#f3c1bb' }}>
+        <div className="readonly-banner" style={{ background: 'var(--red-soft)', color: 'var(--red)', borderColor: 'var(--red-line)' }}>
           <Icon n="alert" width="15" />Returned by {c.closure.rejected.by}: {c.closure.rejected.reason || 'No reason given.'}
         </div>
       )}

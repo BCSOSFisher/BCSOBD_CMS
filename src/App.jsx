@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { api } from './api';
-import { Icon, Avatar, canSeeGangs } from './ui';
+import { Icon, Avatar, canSeeGangs, ThemeToggle } from './ui';
 import Login from './pages/Login';
 import Denied from './pages/Denied';
 import Dashboard from './pages/Dashboard';
@@ -146,6 +146,7 @@ function Topbar({ onMenu }) {
         <Icon n="search" />
         <input placeholder="Search cases, case #, persons, SSN…" value={q} onChange={(e) => setQ(e.target.value)} />
       </form>
+      <ThemeToggle />
       <Bell />
       <div className="clock">{t.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
     </div>

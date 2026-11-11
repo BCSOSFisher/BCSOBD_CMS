@@ -41,7 +41,7 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec, pcEntry }) {
   const outdated = pcEntry?.curated && !d.curated;
   return (
     <div className="card" style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
-      <div style={{ padding: '14px 16px', background: '#f8f9fb', borderBottom: open ? '1px solid var(--line)' : 0 }}>
+      <div style={{ padding: '14px 16px', background: 'var(--subtle)', borderBottom: open ? '1px solid var(--line)' : 0 }}>
         <div className="card-h" style={{ marginBottom: 6 }}>
           <span className="mono muted">[{idx}]</span>
           <b>{d.code} — {d.name}</b>
@@ -76,7 +76,7 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec, pcEntry }) {
       {open && (
         <div style={{ padding: '12px 16px 16px' }}>
           {outdated && (
-            <div className="readonly-banner" style={{ background: 'var(--blue-soft)', color: 'var(--blue)', borderColor: '#c7d7f5', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <div className="readonly-banner" style={{ background: 'var(--blue-soft)', color: 'var(--blue)', borderColor: 'var(--focus)', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <span><Icon n="scale" width="15" style={{ verticalAlign: -3, marginRight: 6 }} />Updated, hand-written elements are available for this charge.</span>
               {b.canEdit && <button className="btn sm" onClick={() => setUpd(true)}>Use updated elements</button>}
             </div>
@@ -84,7 +84,7 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec, pcEntry }) {
           {upd && <Confirm danger={false} yes="Replace elements" text="Replace this charge's elements with the updated checklist? Ticks, linked evidence and notes on the current elements will be cleared, so you'll re-link evidence to the new elements."
             onYes={() => save({ curated: true, elements: pcEntry.elements.map((e) => ({ ...e, met: false, evidence: [], notes: '' })) })} onClose={() => setUpd(false)} />}
           <button className="btn ghost sm" style={{ paddingLeft: 0 }} onClick={() => setShowDef(!showDef)}><Icon n="book" />{showDef ? 'Hide' : 'Show'} statutory definition</button>
-          {showDef && <div className="small" style={{ background: '#f8f9fb', border: '1px solid var(--line)', borderRadius: 6, padding: 12, margin: '6px 0', lineHeight: 1.55 }}>{d.definition}
+          {showDef && <div className="small" style={{ background: 'var(--subtle)', border: '1px solid var(--line)', borderRadius: 6, padding: 12, margin: '6px 0', lineHeight: 1.55 }}>{d.definition}
             {d.url && <div style={{ marginTop: 6 }}><a href={d.url} target="_blank" rel="noreferrer">View on SADRP docs <Icon n="external" width="12" /></a></div>}</div>}
           <div className="elements">
             {els.map((e, k) => (
@@ -108,7 +108,7 @@ function ChargeCard({ ch, idx, b, I, onRemove, setSec, pcEntry }) {
                     {b.canEdit && <button className="btn ghost sm" onClick={() => setNoteEdit({ k, text: e.notes || '' })}><Icon n="edit" />{e.notes ? 'Edit basis' : 'Explain how established'}</button>}
                     {b.canEdit && e.key?.startsWith('custom') && <button className="btn ghost sm" onClick={() => save({ elements: els.filter((_, j) => j !== k) })}>Remove</button>}
                   </div>
-                  {e.notes && noteEdit?.k !== k && <div className="small" style={{ marginTop: 6, color: '#344054', whiteSpace: 'pre-wrap' }}><b>Basis: </b>{e.notes}</div>}
+                  {e.notes && noteEdit?.k !== k && <div className="small" style={{ marginTop: 6, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}><b>Basis: </b>{e.notes}</div>}
                   {noteEdit?.k === k && (
                     <div style={{ marginTop: 8 }}>
                       <textarea rows={3} autoFocus value={noteEdit.text} onChange={(ev) => setNoteEdit({ ...noteEdit, text: ev.target.value })} placeholder="e.g. DNA recovered from the bowl (ED-09) was matched to the suspect by the State Lab." />
