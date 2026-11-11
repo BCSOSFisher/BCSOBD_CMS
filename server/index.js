@@ -25,6 +25,7 @@ const { buildCaseReport, buildWarrantPacket } = require('./report');
 const gangs = require('./gangs');
 const vehicles = require('./vehicles');
 const notif = require('./notify');
+const backup = require('./backup');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -145,7 +146,7 @@ function caseRow(c) {
 }
 
 // ---------- reference ----------
-app.get('/api/me', requireUser, (req, res) => res.json({ user: userPublic(req.user), devLogin: auth.DEV }));
+app.get('/api/me', requireUser, (req, res) => res.json({ user: { ...userPublic(req.user), canBackup: backup.canBackup(req.user) }, devLogin: auth.DEV }));
 app.get('/api/config', requireUser, (req, res) => res.json(config));
 let pcEtag = crypto.createHash('md5').update(JSON.stringify(penalCode)).digest('hex');
 app.get('/api/penal-code', requireUser, (req, res) => { res.set('ETag', pcEtag); res.json(penalCode); });
@@ -181,7 +182,7 @@ app.patch('/api/users/:id', requireUser, (req, res) => {
 
 // ---------- dashboard ----------
 const INACTIVE_DAYS = 14;
-const SECURITY_ACTIONS = ['Denied sign-in', 'Classified access blocked', 'Removed from roster', 'Restored to roster'];
+const SECURITY_ACTIONS = ['Denied sign-in', 'Classified access blocked', 'Removed from roster', 'Restored to roster', 'Backup downloaded'];
 const NOT_ACTIVITY = "('Report downloaded','Warrant packet downloaded','Classified access blocked')";
 app.get('/api/dashboard', requireUser, (req, res) => {
   const me = req.user; const uid = me.id;
@@ -774,6 +775,7 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
 
 gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, canSeeGangs });
 notif.mount(app, { requireUser });
+backup.mount(app, { requireUser, audit });
 vehicles.mount(app, { requireUser, isSup, isViewer, audit, canView, canEdit, getCase, canSeeGangs, touch });
 
 // ---------- static client ----------

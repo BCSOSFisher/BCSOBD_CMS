@@ -90,6 +90,7 @@ h1, h2, h3, h4 { margin: 0; letter-spacing: -.01em; }
 .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .row.end { justify-content: flex-end; }
 .spacer { flex: 1; }
@@ -379,7 +380,7 @@ table.t tr.click:hover td { background: var(--hover); }
 
   /* every multi-column layout stacks into one column */
   .grid { grid-template-columns: minmax(0, 1fr) !important; }
-  .grid.g4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .grid.g4, .grid.g5 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .grid > * { grid-column: auto !important; }
   .page-head { margin-bottom: 14px; }
   .page-head h1 { font-size: 20px; }
@@ -595,3 +596,20 @@ table.t tr.click:hover td { background: var(--hover); }
 .theme-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); display: grid; place-items: center; cursor: pointer; flex: none; }
 .theme-btn:hover { background: var(--chip); color: var(--text); }
 .theme-btn svg { width: 17px; height: 17px; }
+
+/* ---------- backups ---------- */
+.backup-hero { display: flex; gap: 18px; align-items: center; padding: 22px 24px; }
+.backup-ic { width: 52px; height: 52px; border-radius: 12px; background: var(--navy-900); color: var(--gold); display: grid; place-items: center; flex: none; }
+.backup-ic svg { width: 24px; height: 24px; }
+.backup-txt { flex: 1; min-width: 0; }
+.backup-txt h2 { font-size: 17px; margin-bottom: 6px; }
+.backup-txt p { margin: 0 0 6px; line-height: 1.55; }
+.backup-txt p:last-child { margin-bottom: 0; }
+.backup-btn { padding: 11px 18px; font-size: 14.5px; }
+.backup-warn { display: flex; gap: 8px; align-items: center; margin-top: 12px; background: var(--amber-soft); color: var(--amber-text); border: 1px solid var(--amber-line); border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 1.45; }
+.backup-warn svg { flex: none; }
+@media (max-width: 900px) {
+  .backup-hero { flex-direction: column; align-items: stretch; text-align: left; padding: 18px; }
+  .backup-btn { justify-content: center; }
+  .backup-warn { align-items: flex-start; }
+}

@@ -9,6 +9,7 @@ const TYPES = [
   { key: 'Classified access blocked', label: 'Blocked classified access', tone: 'red', desc: 'Someone tried to open a classified case' },
   { key: 'Removed from roster', label: 'Roster removals', tone: 'gray', desc: 'Access removed by command or automatically' },
   { key: 'Restored to roster', label: 'Roster restores', tone: 'green', desc: 'Access restored' },
+  { key: 'Backup downloaded', label: 'Backups downloaded', tone: 'gray', desc: 'A full copy of the database was downloaded' },
 ];
 
 export default function Security() {
@@ -36,7 +37,7 @@ export default function Security() {
         <div><h1>Security Alerts</h1><p>Denied sign-ins, blocked attempts to open classified cases, and roster changes. Visible to Bureau command only.</p></div>
       </div>
 
-      <div className="grid g4" style={{ marginBottom: 16 }}>
+      <div className="grid g5" style={{ marginBottom: 16 }}>
         {TYPES.map((t) => (
           <button key={t.key} className={'panel stat stat-link' + (type === t.key ? ' sel' : '')} style={{ textAlign: 'left', cursor: 'pointer', font: 'inherit' }} onClick={() => setType(type === t.key ? '' : t.key)}>
             <div className="k">{t.label}</div>

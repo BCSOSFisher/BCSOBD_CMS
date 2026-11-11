@@ -187,3 +187,9 @@ All data lives in `DATA_DIR`: `bcdb.sqlite` plus an `uploads/` folder. Back up t
 - **Help & Guide** (sidebar → Bureau): a searchable guide for new detectives that adapts to the reader's rank (G&N and command sections only show to them).
 
 - **Dark mode:** the moon/sun button in the top bar switches themes. It's saved per device and follows the device's own light/dark setting until someone picks.
+
+## Backups
+
+**Supervisor → Backups** downloads one `.zip` with the full database (`bcdb.sqlite`) and every uploaded file (`uploads/`). Only Department Administration, the Bureau Lead, and anyone whose Discord user ID is listed in the Railway variable `BACKUP_DISCORD_IDS` (comma-separated) can see or use it. Each download is logged in Security Alerts.
+
+**To restore:** stop the service, replace `bcdb.sqlite` and the `uploads/` folder on the `/data` volume with the copies from the zip (delete any `bcdb.sqlite-wal` / `bcdb.sqlite-shm` files first), then start the service.

@@ -16,6 +16,7 @@ import Gangs, { GangView } from './pages/Gangs';
 import Vehicles, { VehicleView } from './pages/Vehicles';
 import LinkChart from './pages/LinkChart';
 import Help from './pages/Help';
+import Backups from './pages/Backups';
 import Bell from './Notifications';
 
 const AppCtx = createContext(null);
@@ -74,6 +75,7 @@ function Shell() {
               <Route path="/gangs/chart" element={<GangGate><LinkChart /></GangGate>} />
               <Route path="/gangs/:id" element={<GangGate><GangView /></GangGate>} />
               <Route path="/help" element={<Help />} />
+              <Route path="/backups" element={<Backups />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
@@ -109,11 +111,12 @@ function Sidebar({ open }) {
         <div className="grp">Bureau</div>
         <NavItem to="/roster" icon="shield">Personnel Roster</NavItem>
         <NavItem to="/help" icon="help">Help & Guide</NavItem>
+        {(config.commandRanks.includes(me.rank) || me.canBackup) && <div className="grp">Supervisor</div>}
         {config.commandRanks.includes(me.rank) && <>
-          <div className="grp">Supervisor</div>
           <NavItem to="/?review=1" icon="pen">Supervisor Review{reviewCount > 0 && <span className="count">{reviewCount}</span>}</NavItem>
           <NavItem to="/security" icon="alert">Security Alerts</NavItem>
         </>}
+        {me.canBackup && <NavItem to="/backups" icon="download">Backups</NavItem>}
       </nav>
       <div className="me">
         <Avatar u={me} />
