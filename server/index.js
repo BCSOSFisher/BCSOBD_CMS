@@ -534,6 +534,9 @@ const mediaLimit = () => (process.env.MEDIA_LIMIT_MB ? Number(process.env.MEDIA_
 const mediaUsed = () => db.prepare('SELECT COALESCE(SUM(size),0) n FROM files').get().n;
 // Only photo uploads count toward the per-case limit (media links and other file types don't).
 const caseCount = (id) => db.prepare("SELECT COUNT(*) n FROM files WHERE case_id=? AND mime LIKE 'image/%'").get(id).n;
+const VIDEO_EXT = /\.(mp4|m4v|mov|avi|wmv|webm|mkv|flv|mpe?g|3gp|ogv|ts|mts|m2ts)$/i;
+const isVideoFile = (f) => /^video\//.test(f.mimetype || '') || VIDEO_EXT.test(f.originalname || '');
+const VIDEO_MSG = 'Video files can’t be uploaded. Post the video to YouTube, Streamable, Medal or similar and use “Add Video / Media Link” instead.';
 const isPhoto = (f) => /^image\//.test(f.mimetype || f.mime || '');
 const fullMsg = () => `Media storage is full (${Math.round(mediaUsed() / MB)} MB of ${Math.round(mediaLimit() / MB)} MB used). Delete old files or ask command to raise the limit.`;
 const caseFullMsg = (id) => `This case already has ${caseCount(id)} of ${perCase()} allowed photos. Delete a photo before adding more, or add the media as a link.`;
@@ -560,10 +563,10 @@ app.post('/api/cases/:id/files', requireUser, (req, res, next) => {
   const c = loadCaseForEdit(req, res); if (!c) return;
   req.caseObj = c; next();
 }, checkQuota, upload.array('files', 20), (req, res) => {
-  // Uploaded videos must carry a title (sent as the caption)
-  if ((req.files || []).some((f) => /^video\//.test(f.mimetype)) && !hasTitle(req.body.caption)) {
+  // Video files can't be uploaded — they must be added as a media link (YouTube, Streamable, Medal, etc.)
+  if ((req.files || []).some(isVideoFile)) {
     for (const f of req.files) fs.rmSync(f.path, { force: true });
-    return res.status(400).json({ error: TITLE_MSG });
+    return res.status(400).json({ error: VIDEO_MSG });
   }
   if (!enforceQuota(req.files || [], res, req.caseObj.id)) return;
   const out = [];

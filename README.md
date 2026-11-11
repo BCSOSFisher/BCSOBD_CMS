@@ -171,8 +171,8 @@ Edit `shared/config.json`. You can change division names and prefixes, outside a
 ## Upload limits
 
 - **500 MB per file.** Larger files are refused before they upload.
-- **15 photos per case.** A counter in each case's Media section shows how many are used; delete a photo to make room. Other uploaded files (videos, PDFs, documents) don't count.
-- **Videos need a title.** Uploaded videos and media links can't be saved without a title describing what they show.
+- **15 photos per case.** A counter in each case's Media section shows how many are used; delete a photo to make room. Other uploaded files (PDFs, documents, audio) don't count.
+- **Videos are links only.** Video files can't be uploaded; detectives post them to YouTube, Streamable, Medal, etc. and use **Add Video / Media Link**, which requires a title describing what the video shows. Videos uploaded before this change stay viewable.
 - **Media links are unlimited.** Use **Add Video / Media Link** for Medal, YouTube, Streamable, Google Drive and similar clips. Links appear in the Media section, on the evidence item they're tagged to, and as clickable links in the Case Report and Warrant Packet.
 
 To change them, set `MAX_UPLOAD_MB` and `MAX_FILES_PER_CASE` in Railway's Variables. You can also add an overall cap across all cases with `MEDIA_LIMIT_MB` (unset by default). Person profile photos don't count toward the per-case limit.

@@ -16,6 +16,7 @@ function ytThumb(u) {
 }
 
 const isImg = (f) => /^image\//.test(f.mime || '');
+const isVidFile = (f) => /^video\//.test(f.type || '') || /\.(mp4|m4v|mov|avi|wmv|webm|mkv|flv|mpe?g|3gp|ogv|ts|mts|m2ts)$/i.test(f.name || '');
 const isVid = (f) => /^video\//.test(f.mime || '');
 const size = (n) => (n >= 1048576 ? `${+(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`);
 
@@ -48,11 +49,9 @@ export default function Media({ b, reload }) {
       const total = [...files].reduce((a, f) => a + f.size, 0);
       if (store.limit && store.used + total > store.limit) return toast(`Not enough media storage: ${size(store.limit - store.used)} left of ${size(store.limit)}.`, true);
     }
-    const vids = [...files].filter((f) => /^video\//.test(f.type));
-    const others = [...files].filter((f) => !/^video\//.test(f.type));
-    // Videos need a title describing what they show before they can be uploaded
-    if (vids.length) return setPending({ others, vids, titles: vids.map(() => ''), ref });
-    send(others, [], ref);
+    // Videos can't be uploaded — they must be added as a media link
+    if ([...files].some(isVidFile)) return toast('Video files can’t be uploaded. Post it to YouTube, Streamable or Medal and use “Add Video / Media Link”.', true);
+    send([...files], [], ref);
   };
   const send = async (others, vids, evRef) => {
     setBusy(true);
@@ -91,10 +90,10 @@ export default function Media({ b, reload }) {
             onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
             onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}>
             <Icon n="image" width="26" height="26" /><div style={{ marginTop: 6 }}><b>{busy ? 'Uploading…' : 'Drop files here or click to upload'}</b></div>
-            <div className="small faint">Images, video, audio, PDFs and documents · up to {store ? size(store.perFile) : '500 MB'} each{store ? ` · max ${store.perCase} photos per case` : ''}</div>
-            <div className="small faint" style={{ marginTop: 2 }}>Long videos? Use <b>Add Video / Media Link</b> for Medal, YouTube, Streamable or Drive clips — links don’t count toward the limit.</div>
+            <div className="small faint">Photos, audio, PDFs and documents · up to {store ? size(store.perFile) : '500 MB'} each{store ? ` · max ${store.perCase} photos per case` : ''}</div>
+            <div className="small faint" style={{ marginTop: 2 }}><b>Videos must be added as a link</b> — use <b>Add Video / Media Link</b> for YouTube, Streamable, Medal or Drive clips. Links don’t count toward the limit.</div>
           </div>
-          <input ref={inp} type="file" multiple hidden onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
+          <input ref={inp} type="file" multiple hidden accept="image/*,audio/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.csv" onChange={(e) => { upload(e.target.files); e.target.value = ''; }} />
           <div className="row small" style={{ marginTop: 8 }}>
             <span className="muted">Tag uploads to evidence:</span>
             <select style={{ width: 'auto', padding: '3px 8px', fontSize: 13 }} value={ref} onChange={(e) => setRef(e.target.value)}>
