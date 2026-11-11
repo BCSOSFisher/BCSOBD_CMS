@@ -26,6 +26,8 @@ const gangs = require('./gangs');
 const vehicles = require('./vehicles');
 const notif = require('./notify');
 const backup = require('./backup');
+const dedupe = require('./persons-dedupe');
+const feedback = require('./feedback');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -415,7 +417,20 @@ app.get('/api/persons', requireUser, (req, res) => {
 app.post('/api/persons', requireUser, (req, res) => {
   if (isViewer(req.user)) return res.status(403).json({ error: VIEW_ONLY_MSG });
   if (!req.body?.name?.trim()) return res.status(400).json({ error: 'Name is required' });
+  if (dedupe.blockIfDuplicate(req.body, req.body, res)) return;
   res.json({ id: insertPerson(req.body, req.user.id, canSeeGangs(req.user)) });
+});
+// Command: likely duplicate profiles, and merging two profiles into one
+app.get('/api/persons/duplicates', requireUser, (req, res) => {
+  if (!isSup(req.user)) return res.status(403).json({ error: 'Command only' });
+  res.json(dedupe.duplicateGroups());
+});
+app.post('/api/persons/:id/merge', requireUser, (req, res) => {
+  if (!isSup(req.user)) return res.status(403).json({ error: 'Only command can merge person profiles.' });
+  const from = Number(req.params.id); const into = Number(req.body?.into);
+  if (!into || into === from) return res.status(400).json({ error: 'Choose the profile to keep.' });
+  try { res.json({ ok: true, into, ...dedupe.mergePersons(from, into, req.user, audit) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
 });
 app.get('/api/persons/:id', requireUser, (req, res) => {
   const p = db.prepare('SELECT * FROM persons WHERE id=?').get(Number(req.params.id));
@@ -444,6 +459,7 @@ app.post('/api/cases/:id/persons', requireUser, (req, res) => {
   let pid = Number(b.person_id);
   if (!pid) {
     if (!b.person?.name?.trim()) return res.status(400).json({ error: 'Name is required' });
+    if (dedupe.blockIfDuplicate(b.person, b, res)) return;
     pid = insertPerson(b.person, req.user.id, canSeeGangs(req.user));
   }
   try {
@@ -776,6 +792,7 @@ app.get('/api/items/:itemId/warrant.docx', requireUser, async (req, res) => {
 gangs.mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, canSeeGangs });
 notif.mount(app, { requireUser });
 backup.mount(app, { requireUser, audit });
+feedback.mount(app, { requireUser, isSup, notif, commandRanks: CMD_RANKS });
 vehicles.mount(app, { requireUser, isSup, isViewer, audit, canView, canEdit, getCase, canSeeGangs, touch });
 
 // ---------- static client ----------

@@ -134,13 +134,18 @@ export default function Help() {
       </>,
     },
     {
+      id: 'feedback', icon: 'note', title: 'Feedback & problems',
+      body: <p>Have an idea, found a bug, or not sure how to do something? Open <Link to="/feedback">Feedback</Link> in the sidebar and send a suggestion, problem or question. It goes straight to Bureau command, and you'll get a notification when they update or reply to it.</p>,
+    },
+    {
       id: 'inactive', icon: 'clock', title: 'Inactive cases',
       body: <p>If an open case has no activity for <b>14 days</b>, it's flagged on the dashboard and shows an inactivity notice on the case. Add a note or update the case to clear it — or set it to <b>Suspended</b> if it's genuinely on hold.</p>,
     },
     {
       id: 'records', icon: 'car', title: 'Persons & vehicles',
       body: <>
-        <p>The <Link to="/persons">Persons Directory</Link> and <Link to="/vehicles">Vehicle Directory</Link> are shared across the Bureau. Each record shows every case it appears in, so check them before creating duplicates. Vehicles are searched by plate and can be linked to an owner.</p>
+        <p>The <Link to="/persons">Persons Directory</Link> and <Link to="/vehicles">Vehicle Directory</Link> are shared across the Bureau. Each record shows every case it appears in. Vehicles are searched by plate and can be linked to an owner.</p>
+        <p>When you create a new person, the system checks for an existing profile with the same name or SSN. If it finds one, choose <b>Use this person</b> to keep their history in one place — only create a new profile if it's genuinely a different person.{cmd && <> Command can combine duplicates with <b>Merge Duplicate</b> on a profile, or review them all with <b>Find Duplicates</b> in the directory.</>}</p>
         {!gangs && <p className="small muted">A person's gang affiliation (name only) may show on their profile. Full gang intelligence is restricted to the Gang & Narcotics Unit.</p>}
       </>,
     },

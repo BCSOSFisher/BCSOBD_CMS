@@ -5,6 +5,7 @@ import { useApp } from '../App';
 import { Icon, Empty, Modal, useToast, fmtDate, canSeeGangs } from '../ui';
 import { Fields } from '../sections/common';
 import { PERSON_FIELDS } from '../sections/Persons';
+import { useDuplicateCheck, DuplicatesReview } from '../Duplicates';
 
 export default function Persons() {
   const { me, config } = useApp();
@@ -14,12 +15,20 @@ export default function Persons() {
   const [add, setAdd] = useState(null);
   const nav = useNavigate();
   const toast = useToast();
+  const dup = useDuplicateCheck();
+  const [review, setReview] = useState(false);
+  const cmd = config.commandRanks.includes(me.rank);
+  const reload = () => api.get(`/api/persons?q=${encodeURIComponent(q)}`).then(setRows);
+  const create = () => dup.run(add.name, async (force) => { const r = await api.post('/api/persons', { ...add, force_new: force }); nav(`/persons/${r.id}`); }, { onUse: (m) => nav(`/persons/${m.id}`) });
   useEffect(() => { const t = setTimeout(() => api.get(`/api/persons?q=${encodeURIComponent(q)}`).then(setRows), 200); return () => clearTimeout(t); }, [q]);
   return (
     <>
       <div className="page-head">
         <div><h1>Persons Directory</h1><p>Every suspect, victim, witness and person of interest across all Bureau cases.</p></div>
-        {me.rank !== 'viewer' && <button className="btn primary" onClick={() => setAdd({})}><Icon n="plus" />New Profile</button>}
+        <div className="row">
+          {cmd && <button className="btn" onClick={() => setReview(true)}><Icon n="layers" />Find Duplicates</button>}
+          {me.rank !== 'viewer' && <button className="btn primary" onClick={() => setAdd({})}><Icon n="plus" />New Profile</button>}
+        </div>
       </div>
       <div className="panel">
         <div className="panel-h"><input style={{ maxWidth: 360 }} placeholder="Search name, SSN or phone…" value={q} onChange={(e) => setQ(e.target.value)} /><span className="muted small">{rows ? `${rows.length} record(s)` : ''}</span></div>
@@ -38,10 +47,12 @@ export default function Persons() {
       </div>
       {add && (
         <Modal wide title="New Person Profile" onClose={() => setAdd(null)} footer={<><button className="btn" onClick={() => setAdd(null)}>Cancel</button>
-          <button className="btn primary" disabled={!add.name} onClick={async () => { try { const r = await api.post('/api/persons', add); nav(`/persons/${r.id}`); } catch (e) { toast(e.message, true); } }}>Create</button></>}>
+          <button className="btn primary" disabled={!add.name} onClick={create}>Create</button></>}>
           <Fields fields={PERSON_FIELDS} v={add} set={setAdd} />
+          {dup.modal}
         </Modal>
       )}
+      {review && <DuplicatesReview onClose={() => setReview(false)} onChanged={reload} />}
     </>
   );
 }

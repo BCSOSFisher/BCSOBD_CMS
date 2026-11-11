@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useApp } from '../App';
 import { Icon, Modal, Field, Empty, Confirm, Status, useToast, fmtDate } from '../ui';
 import { Fields, loadGangs } from '../sections/common';
+import { useDuplicateCheck } from '../Duplicates';
 
 export const GANG_TYPES = ['Cartel', 'Street Gang', 'Motorcycle Club', 'Organized Crime Group', 'Other'];
 export const GANG_STATUSES = ['Recognized', 'Suspected', 'Inactive'];
@@ -244,8 +245,11 @@ function AddMemberModal({ gang, onClose, onDone }) {
   const [rank, setRank] = useState('Associate');
   const [confidence, setConfidence] = useState('Suspected');
   useEffect(() => { const t = setTimeout(() => api.get(`/api/persons?q=${encodeURIComponent(q)}`).then(setRes), 200); return () => clearTimeout(t); }, [q]);
+  const dup = useDuplicateCheck();
+  const add = async (body) => { await api.post(`/api/gangs/${gang.id}/members`, { ...body, rank, confidence }); toast('Member added'); onDone(); };
   const save = async () => {
-    try { await api.post(`/api/gangs/${gang.id}/members`, mode === 'search' ? { person_id: pick.id, rank, confidence } : { person, rank, confidence }); toast('Member added'); onDone(); } catch (e) { toast(e.message, true); }
+    if (mode === 'search') { try { await add({ person_id: pick.id }); } catch (e) { toast(e.message, true); } return; }
+    await dup.run(person.name, (force) => add({ person, force_new: force }), { onUse: (m) => add({ person_id: m.id }) });
   };
   return (
     <Modal wide title={`Add Member — ${gang.name}`} onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button>
@@ -274,6 +278,7 @@ function AddMemberModal({ gang, onClose, onDone }) {
         <Field label="Suspected Rank"><select value={rank} onChange={(e) => setRank(e.target.value)}>{RANKS.map((r) => <option key={r}>{r}</option>)}</select></Field>
         <Field label="Membership"><select value={confidence} onChange={(e) => setConfidence(e.target.value)}><option>Suspected</option><option>Confirmed</option></select></Field>
       </div>
+      {dup.modal}
     </Modal>
   );
 }

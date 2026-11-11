@@ -193,3 +193,9 @@ All data lives in `DATA_DIR`: `bcdb.sqlite` plus an `uploads/` folder. Back up t
 **Supervisor → Backups** downloads one `.zip` with the full database (`bcdb.sqlite`) and every uploaded file (`uploads/`). Only Department Administration, the Bureau Lead, and anyone whose Discord user ID is listed in the Railway variable `BACKUP_DISCORD_IDS` (comma-separated) can see or use it. Each download is logged in Security Alerts.
 
 **To restore:** stop the service, replace `bcdb.sqlite` and the `uploads/` folder on the `/data` volume with the copies from the zip (delete any `bcdb.sqlite-wal` / `bcdb.sqlite-shm` files first), then start the service.
+
+## Duplicate persons & feedback
+
+- **Duplicate check:** creating a person (directory, case or gang) with the same name or SSN as an existing profile shows a warning with the matches. Detectives can use the existing profile or create a new one anyway.
+- **Merging (command):** *Merge Duplicate* on a profile, or *Find Duplicates* in the Persons Directory. Cases, charges, interviews, warrants, coroner decedent, gang membership, vehicles and photos move to the kept profile; blank details are filled from the duplicate, then the duplicate is deleted. Logged on each affected case.
+- **Feedback** (sidebar → Bureau): anyone can send a suggestion, problem or question. Command is notified, can set a status (New, Under Review, Planned, Done, Declined) and reply; the sender is notified.

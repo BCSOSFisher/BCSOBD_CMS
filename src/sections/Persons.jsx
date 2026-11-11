@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useApp } from '../App';
 import { Icon, Modal, Field, Empty, RolePill, Confirm, useToast, fmtDate } from '../ui';
 import { Fields, SectionPanel } from './common';
+import { useDuplicateCheck } from '../Duplicates';
 
 export const PERSON_FIELDS = [
   { k: 'name', label: 'Full Name' }, { k: 'ssn', label: 'SSN / State ID', span: 1 }, { k: 'dob', label: 'Date of Birth', type: 'date', span: 1 },
@@ -75,11 +76,16 @@ function AddPersonModal({ b, reload, defaultRole, onClose }) {
   const [role, setRole] = useState(defaultRole);
   const [notes, setNotes] = useState('');
   useEffect(() => { const t = setTimeout(() => api.get(`/api/persons?q=${encodeURIComponent(q)}`).then(setRes), 200); return () => clearTimeout(t); }, [q]);
+  const dup = useDuplicateCheck();
+  const done = async () => { await reload(); toast('Person added'); onClose(); };
   const save = async () => {
-    try {
-      await api.post(`/api/cases/${b.case.id}/persons`, mode === 'search' ? { person_id: pick?.id, role, notes } : { person, role, notes });
-      await reload(); toast('Person added'); onClose();
-    } catch (e) { toast(e.message, true); }
+    if (mode === 'search') {
+      try { await api.post(`/api/cases/${b.case.id}/persons`, { person_id: pick?.id, role, notes }); await done(); } catch (e) { toast(e.message, true); }
+      return;
+    }
+    // New profile: warn first if this person may already be in the directory
+    await dup.run(person.name, async (force) => { await api.post(`/api/cases/${b.case.id}/persons`, { person, role, notes, force_new: force }); await done(); },
+      { onUse: async (m) => { await api.post(`/api/cases/${b.case.id}/persons`, { person_id: m.id, role, notes }); await done(); } });
   };
   return (
     <Modal wide title="Add Person to Case" onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button>
@@ -106,6 +112,7 @@ function AddPersonModal({ b, reload, defaultRole, onClose }) {
         <Field label="Role in this Case"><select value={role} onChange={(e) => setRole(e.target.value)}>{config.personRoles.map((r) => <option key={r}>{r}</option>)}</select></Field>
         <Field label="Relevance to Case"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. DNA located on murder weapon" /></Field>
       </div>
+      {dup.modal}
     </Modal>
   );
 }

@@ -13,6 +13,7 @@ const KIND = {
   reopened: { icon: 'folder', cls: 'amber' },
   warrant: { icon: 'gavel', cls: 'blue' },
   status: { icon: 'clock', cls: 'gray' },
+  feedback: { icon: 'note', cls: 'purple' },
 };
 
 export default function Bell() {
@@ -43,7 +44,8 @@ export default function Bell() {
   const go = async (n) => {
     if (!n.read_at) { await api.post('/api/notifications/read', { id: n.id }).catch(() => {}); load(); }
     setOpen(false);
-    if (n.case_id && n.case_code) nav(`/cases/${n.case_id}`);
+    if (n.kind === 'feedback') nav('/feedback');
+    else if (n.case_id && n.case_code) nav(`/cases/${n.case_id}`);
   };
   const readAll = async () => { await api.post('/api/notifications/read'); load(); };
   const clearRead = async () => { await api.del('/api/notifications'); load(); };

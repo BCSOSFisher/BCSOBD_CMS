@@ -159,6 +159,7 @@ function mount(app, { requireUser, isSup, isViewer, audit, canView, getCase, can
     if (!pid) {
       const p = req.body.person || {};
       if (!String(p.name || '').trim()) return res.status(400).json({ error: 'Choose a person or enter a name' });
+      if (require('./persons-dedupe').blockIfDuplicate(p, req.body, res)) return;
       pid = Number(db.prepare('INSERT INTO persons (name,ssn,dob,gender,address,description,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)')
         .run(p.name.trim(), p.ssn || '', p.dob || '', p.gender || '', p.address || '', p.description || '', req.user.id, now(), now()).lastInsertRowid);
     }

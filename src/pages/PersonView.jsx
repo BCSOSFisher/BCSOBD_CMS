@@ -5,6 +5,7 @@ import { useApp } from '../App';
 import { Icon, Empty, Modal, RolePill, Status, useToast, fmtDate , canSeeGangs } from '../ui';
 import { Fields } from '../sections/common';
 import { PERSON_FIELDS } from '../sections/Persons';
+import { MergeModal } from '../Duplicates';
 
 export default function PersonView() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function PersonView() {
   const gangs = canSeeGangs(me, config);
   const [d, setD] = useState(null);
   const [edit, setEdit] = useState(null);
+  const [merge, setMerge] = useState(false);
   const toast = useToast();
   const nav = useNavigate();
   const photo = useRef();
@@ -26,7 +28,10 @@ export default function PersonView() {
       <div className="page-head">
         <div><div className="small muted"><a onClick={() => nav('/persons')} style={{ cursor: 'pointer' }}>Persons Directory</a> /</div><h1>{p.name}</h1>
           <div className="row" style={{ marginTop: 6 }}>{roles.map((r) => <RolePill key={r} r={r} />)}</div></div>
-        {!ro && <button className="btn" onClick={() => setEdit(Object.fromEntries(PERSON_FIELDS.map((f) => [f.k, p[f.k] || ''])))}><Icon n="edit" />Edit Profile</button>}
+        <div className="row">
+          {config.commandRanks.includes(me.rank) && <button className="btn" onClick={() => setMerge(true)} title="Combine this profile with a duplicate"><Icon n="layers" />Merge Duplicate</button>}
+          {!ro && <button className="btn" onClick={() => setEdit(Object.fromEntries(PERSON_FIELDS.map((f) => [f.k, p[f.k] || ''])))}><Icon n="edit" />Edit Profile</button>}
+        </div>
       </div>
       <div className="grid" style={{ gridTemplateColumns: '260px minmax(0,1fr)' }}>
         <div className="panel panel-b" style={{ textAlign: 'center' }}>
@@ -75,6 +80,7 @@ export default function PersonView() {
           </div>
         </div>
       </div>
+      {merge && <MergeModal person={{ ...p, case_count: d.cases.length }} onClose={() => setMerge(false)} onDone={(keptId) => { setMerge(false); if (String(keptId) === String(id)) load(); else nav(`/persons/${keptId}`); }} />}
       {edit && (
         <Modal wide title="Edit Profile" onClose={() => setEdit(null)} footer={<><button className="btn" onClick={() => setEdit(null)}>Cancel</button>
           <button className="btn primary" onClick={async () => { await api.patch(`/api/persons/${p.id}`, edit); setEdit(null); load(); toast('Profile updated'); }}>Save</button></>}>
