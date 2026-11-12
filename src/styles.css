@@ -657,3 +657,17 @@ label.dup-row { cursor: pointer; }
   .fb-form { position: static; }
   .dup-row { flex-wrap: wrap; }
 }
+
+/* help screenshots & tips */
+.help-shot { margin: 14px 0 16px; }
+.help-shot button { display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--subtle); cursor: zoom-in; box-shadow: var(--shadow); }
+.help-shot.narrow button { max-width: 620px; }
+.help-shot img { display: block; width: 100%; height: auto; }
+.help-shot figcaption { margin-top: 7px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+:root[data-theme="dark"] .help-shot img { filter: brightness(.92); }
+.help-tip { display: flex; gap: 9px; align-items: flex-start; margin: 10px 0; padding: 10px 13px; border-radius: 8px; background: var(--green-soft); border: 1px solid var(--line); font-size: 13.5px; line-height: 1.5; }
+.help-tip svg { flex: none; margin-top: 3px; color: var(--green); }
+.help-tip.warn { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber-text); }
+.help-tip.warn svg { color: var(--amber); }
+.help-steps li { margin-bottom: 7px; }
+.help-h { font-size: 14px; margin: 18px 0 6px; }
